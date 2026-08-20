@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SwasthyaMitra | Next-Gen AI Health Ecosystem</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- jsPDF for Clinical Summary Download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <i class="fa-solid fa-heart-pulse logo-icon"></i>
+      <span>Swasthya<strong>Mitra</strong></span>
+    </div>
+    <div class="nav-links">
+      <a href="#outbreaks">Active Outbreaks</a>
+      <a href="#reminders">Pill Reminder</a>
+      <a href="#hospitals">Nearby Hospitals</a>
+      <button class="sos-nav-btn" id="open-sos-btn"><i class="fa-solid fa-truck-medical"></i> 1-Click SOS</button>
+      <button class="nav-btn" id="nav-open-chat"><i class="fa-solid fa-comments"></i> Talk to AI Doctor</button>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero-section">
+    <div class="hero-content">
+      <div class="badge-tag"><i class="fa-solid fa-brain"></i> RAG Medical Knowledge + Live Vision AI</div>
+      <h1>Instant Medical Intelligence & <span>24/7 Smart Health Guidance</span></h1>
+      <p>Verified medical encyclopedia lookup, real-time voice triage in Indian languages, blood report scanning, pill schedule alarms, and live GPS hospital dispatch.</p>
+      <div class="hero-actions">
+        <button class="btn-primary" id="hero-chat-btn"><i class="fa-solid fa-stethoscope"></i> Start Health Consultation</button>
+        <button class="btn-secondary" id="hero-reminder-btn"><i class="fa-solid fa-bell"></i> Set Pill Reminder</button>
+        <button class="btn-sos-hero" id="hero-sos-btn"><i class="fa-solid fa-triangle-exclamation"></i> Emergency SOS (108)</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- CURRENTLY SPREADING DISEASES SECTION -->
+  <section class="section" id="outbreaks" style="background: #f1f5f9;">
+    <div class="outbreak-header-bar">
+      <span class="pulse-red"></span>
+      <h2 class="section-title" style="margin:0; display:inline-block;">⚠️ Currently Spreading Seasonal Outbreaks & Health Alerts</h2>
+    </div>
+    <p class="section-subtitle">Real-time health advisory, active vector-borne & seasonal viral surveillance</p>
+
+    <div class="outbreaks-grid">
+      <div class="outbreak-card alert-high">
+        <div class="outbreak-tag tag-high">🦟 High Spread | Monsoon Alert</div>
+        <h3>Dengue Fever (Breakbone Fever)</h3>
+        <p class="outbreak-symptoms"><strong>Key Symptoms:</strong> High sudden fever, pain behind eyes, severe joint/muscle ache, rapid platelet drop, skin rash.</p>
+        <div class="outbreak-care">
+          <strong>Action Plan:</strong> Daily platelet monitoring, plenty of coconut water, ORS hydration, and avoid taking Aspirin/Brufen without medical consult.
+        </div>
+      </div>
+
+      <div class="outbreak-card alert-moderate">
+        <div class="outbreak-tag tag-moderate">🦠 Seasonal Peak | Viral Flu</div>
+        <h3>Influenza A/H3N2 & Viral Throat Infection</h3>
+        <p class="outbreak-symptoms"><strong>Key Symptoms:</strong> Persistent dry cough, running nose, sore throat, chills, fatigue, mild breathlessness.</p>
+        <div class="outbreak-care">
+          <strong>Action Plan:</strong> Warm saline gargles, steam inhalation, paracetamol for fever, wear mask in crowded public places.
+        </div>
+      </div>
+
+      <div class="outbreak-card alert-moderate">
+        <div class="outbreak-tag tag-moderate">💧 Water-Borne Alert</div>
+        <h3>Typhoid & Acute Gastroenteritis</h3>
+        <p class="outbreak-symptoms"><strong>Key Symptoms:</strong> Step-ladder prolonged fever, abdominal stomach cramps, loose stools, nausea, vomiting.</p>
+        <div class="outbreak-care">
+          <strong>Action Plan:</strong> Drink boiled/purified water only, eat fresh warm home food, avoid roadside juices and raw cut salads.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MEDICINE REMINDER WEBPAGE SECTION -->
+  <section class="section" id="reminders">
+    <h2 class="section-title">⏰ Smart Medicine & Hydration Scheduler</h2>
+    <p class="section-subtitle">Never miss your antibiotics, blood pressure, or daily vitamins</p>
+
+    <div class="reminder-page-card">
+      <div class="reminder-page-form">
+        <div class="rem-input-group">
+          <label><i class="fa-solid fa-pills"></i> Medicine Name</label>
+          <input type="text" id="web-med-name" placeholder="e.g. Paracetamol 650mg or Amoxicillin">
+        </div>
+        <div class="rem-input-group">
+          <label><i class="fa-solid fa-clock"></i> Scheduled Time</label>
+          <input type="time" id="web-med-time">
+        </div>
+        <button id="web-save-reminder-btn" class="btn-primary">
+          <i class="fa-solid fa-bell"></i> Enable Browser Reminder
+        </button>
+      </div>
+
+      <div id="active-reminders-list" class="active-reminders-box">
+        <h4><i class="fa-solid fa-list-check"></i> Your Active Schedules</h4>
+        <div id="reminders-container"><p style="color: var(--text-muted); font-size: 0.88rem;">No active schedules yet. Set one above!</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Nearby Hospitals Section -->
+  <section class="section" id="hospitals">
+    <h2 class="section-title">🏥 Live GPS Nearby Hospitals</h2>
+    <p class="section-subtitle" id="loc-status-text">Allow location access to discover 24/7 emergency centers around you</p>
+    
+    <div class="hospital-lookup-box" style="text-align: center;">
+      <button id="find-hospitals-btn" class="btn-primary" style="margin: 0 auto;">
+        <i class="fa-solid fa-location-crosshairs"></i> Fetch Hospitals Near My Current Location
+      </button>
+    </div>
+
+    <div class="hospitals-grid" id="hospitals-container" style="margin-top: 25px;"></div>
+  </section>
+
+  <!-- Live Camera Capture Modal -->
+  <div class="camera-modal" id="camera-modal">
+    <div class="camera-box">
+      <div class="sos-header">
+        <h3><i class="fa-solid fa-camera"></i> Capture Photo for AI Diagnosis</h3>
+        <button id="close-camera-btn" class="header-btn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="video-container">
+        <video id="webcam-video" autoplay playsinline></video>
+        <canvas id="webcam-canvas" style="display: none;"></canvas>
+      </div>
+      <div class="camera-actions">
+        <button id="snap-photo-btn" class="btn-primary"><i class="fa-solid fa-camera-retro"></i> Capture & Use Photo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOS Emergency Modal -->
+  <div class="sos-modal" id="sos-modal">
+    <div class="sos-box">
+      <div class="sos-header">
+        <h2><i class="fa-solid fa-triangle-exclamation"></i> Emergency SOS Dispatch</h2>
+        <button id="close-sos" class="header-btn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="sos-desc">If you or someone nearby is experiencing acute symptoms, take immediate action:</p>
+      
+      <div class="sos-actions-grid">
+        <a href="tel:108" class="sos-call-btn call-108">
+          <i class="fa-solid fa-phone-volume"></i>
+          <span>Call National Ambulance (108)</span>
+        </a>
+        <a href="tel:112" class="sos-call-btn call-112">
+          <i class="fa-solid fa-shield-heart"></i>
+          <span>Call National Emergency (112)</span>
+        </a>
+      </div>
+
+      <div class="sos-whatsapp-box">
+        <h4><i class="fa-brands fa-whatsapp"></i> WhatsApp Family SOS Alert</h4>
+        <p>Send your live GPS coordinates and emergency alert to a family member in 1-click:</p>
+        <div class="sos-wa-input-row">
+          <input type="tel" id="sos-phone" placeholder="Family Phone Number (e.g. 919876543210)">
+          <button id="send-wa-sos" class="btn-primary"><i class="fa-brands fa-whatsapp"></i> Send Alert</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Chatbot Modal -->
+  <div class="chat-modal" id="chat-modal">
+    <div class="chat-wrapper">
+      
+      <!-- Chat Header -->
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <div class="avatar-ring"><i class="fa-solid fa-user-doctor"></i></div>
+          <div>
+            <h3>Dr. SwasthyaMitra AI</h3>
+            <p class="online-indicator"><span class="pulse"></span> Online | Clinical Triage Bot</p>
+          </div>
+        </div>
+
+        <div class="chat-header-actions">
+          <button id="download-pdf-btn" class="header-btn" title="Download Summary PDF">
+            <i class="fa-solid fa-file-pdf"></i>
+          </button>
+
+          <select id="language-select" class="lang-select" title="Choose Language">
+            <option value="Hinglish" selected>Hinglish</option>
+            <option value="English">English</option>
+            <option value="Hindi">हिन्दी (Hindi)</option>
+            <option value="Marathi">मराठी (Marathi)</option>
+            <option value="Bengali">বাংলা (Bengali)</option>
+            <option value="Tamil">தமிழ் (Tamil)</option>
+            <option value="Telugu">తెలుగు (Telugu)</option>
+            <option value="Gujarati">ગુજરાતી (Gujarati)</option>
+            <option value="Punjabi">ਪੰਜਾਬੀ (Punjabi)</option>
+          </select>
+
+          <button id="mute-btn" class="header-btn active-voice" title="Toggle Voice Speech">
+            <i class="fa-solid fa-volume-high"></i>
+          </button>
+
+          <button id="close-chat" class="header-btn" title="Minimize Chat">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Triage Chips -->
+      <div class="chat-chips" id="quick-chips-bar">
+        <button class="chip" data-q="What is the recommended recovery diet for Dengue?">🥗 Dengue Diet Chart</button>
+        <button class="chip" data-q="Interpret blood report: Platelets 85,000, Hemoglobin 10.2">🧪 Blood Test Analysis</button>
+        <button class="chip" data-q="I have sudden chest pain radiating to left arm">🚨 Emergency Check</button>
+        <button class="chip" data-q="Find nearest hospitals near me">🏥 Hospitals Nearby</button>
+      </div>
+
+      <!-- Messages Screen -->
+      <div class="chat-messages" id="chat-box"></div>
+
+      <!-- Symptom Auto-Suggestions Container -->
+      <div id="symptom-suggestions" class="symptom-suggestions-bar" style="display: none;"></div>
+
+      <!-- Image Preview Area -->
+      <div id="image-preview-container" class="image-preview-box" style="display: none;">
+        <img id="image-preview" src="" alt="Scan upload">
+        <span id="remove-img-btn"><i class="fa-solid fa-trash"></i> Remove Image</span>
+      </div>
+
+      <!-- Input Area -->
+      <div class="chat-input-row">
+        <!-- Open Live Camera Button -->
+        <button id="open-camera-btn" class="tool-btn" title="Take Live Photo (Skin/Report/Injury)">
+          <i class="fa-solid fa-camera"></i>
+        </button>
+
+        <!-- Upload File Button -->
+        <label for="image-upload" class="tool-btn" title="Upload Image / Report">
+          <i class="fa-solid fa-image"></i>
+          <input type="file" id="image-upload" accept="image/*" style="display:none;">
+        </label>
+
+        <!-- Mic Button -->
+        <button id="voice-btn" class="tool-btn" title="Speak via Mic">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
+
+        <input type="text" id="user-input" placeholder="Type a symptom or attach/click a photo..." autocomplete="off">
+
+        <button id="send-btn" class="send-btn" title="Send">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
