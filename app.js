@@ -1,4 +1,4 @@
-const BACKEND_URL = "https://sih-healthchatbot.onrender.com/chat";
+const BACKEND_URL = "/chat";
 
 // UI Elements
 const chatModal = document.getElementById("chat-modal");
