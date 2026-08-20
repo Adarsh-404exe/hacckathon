@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SwasthyaMitra | Next-Gen AI Health Ecosystem</title>
+  <title>MediNova | Next-Gen AI Health Ecosystem</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,7 +16,7 @@
   <nav class="navbar">
     <div class="nav-brand">
       <i class="fa-solid fa-heart-pulse logo-icon"></i>
-      <span>Swasthya<strong>Mitra</strong></span>
+      <span>Medi<strong>Nova</strong></span>
     </div>
     <div class="nav-links">
       <a href="#outbreaks">Active Outbreaks</a>
@@ -30,7 +30,6 @@
   <!-- Hero Section -->
   <header class="hero-section">
     <div class="hero-content">
-      <div class="badge-tag"><i class="fa-solid fa-brain"></i> RAG Medical Knowledge + Live Vision AI</div>
       <h1>Instant Medical Intelligence & <span>24/7 Smart Health Guidance</span></h1>
       <p>Verified medical encyclopedia lookup, real-time voice triage in Indian languages, blood report scanning, pill schedule alarms, and live GPS hospital dispatch.</p>
       <div class="hero-actions">
@@ -124,7 +123,7 @@
   <div class="camera-modal" id="camera-modal">
     <div class="camera-box">
       <div class="sos-header">
-        <h3><i class="fa-solid fa-camera"></i> Capture Photo for AI Diagnosis</h3>
+        <h3><i class="fa-solid fa-camera"></i> Scan Report / Medicine / Skin Condition</h3>
         <button id="close-camera-btn" class="header-btn"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="video-container">
@@ -132,7 +131,7 @@
         <canvas id="webcam-canvas" style="display: none;"></canvas>
       </div>
       <div class="camera-actions">
-        <button id="snap-photo-btn" class="btn-primary"><i class="fa-solid fa-camera-retro"></i> Capture & Use Photo</button>
+        <button id="snap-photo-btn" class="btn-primary"><i class="fa-solid fa-camera-retro"></i> Capture & Analyze Photo</button>
       </div>
     </div>
   </div>
@@ -177,8 +176,8 @@
         <div class="chat-header-info">
           <div class="avatar-ring"><i class="fa-solid fa-user-doctor"></i></div>
           <div>
-            <h3>Dr. SwasthyaMitra AI</h3>
-            <p class="online-indicator"><span class="pulse"></span> Online | Clinical Triage Bot</p>
+            <h3>Dr. MediNova AI</h3>
+            <p class="online-indicator"><span class="pulse"></span> Online | Report, Medicine & Skin Triage</p>
           </div>
         </div>
 
@@ -232,12 +231,12 @@
       <!-- Input Area -->
       <div class="chat-input-row">
         <!-- Open Live Camera Button -->
-        <button id="open-camera-btn" class="tool-btn" title="Take Live Photo (Skin/Report/Injury)">
+        <button id="open-camera-btn" class="tool-btn" title="Scan Lab Report / Medicine Strip / Skin Rash">
           <i class="fa-solid fa-camera"></i>
         </button>
 
         <!-- Upload File Button -->
-        <label for="image-upload" class="tool-btn" title="Upload Image / Report">
+        <label for="image-upload" class="tool-btn" title="Upload Image / Report / Medicine">
           <i class="fa-solid fa-image"></i>
           <input type="file" id="image-upload" accept="image/*" style="display:none;">
         </label>
@@ -247,7 +246,7 @@
           <i class="fa-solid fa-microphone"></i>
         </button>
 
-        <input type="text" id="user-input" placeholder="Type a symptom or attach/click a photo..." autocomplete="off">
+        <input type="text" id="user-input" placeholder="Type a symptom, or attach report / medicine / skin photo..." autocomplete="off">
 
         <button id="send-btn" class="send-btn" title="Send">
           <i class="fa-solid fa-paper-plane"></i>
