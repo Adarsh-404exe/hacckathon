@@ -1,14 +1,12 @@
 import os
-import base64
+import re
 from typing import List, Optional, Union, Dict
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from groq import Groq
-import numpy as np
 from pydantic import BaseModel
 from pypdf import PdfReader
-from sentence_transformers import SentenceTransformer
 
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
@@ -20,7 +18,6 @@ groq_client = Groq(api_key=GROQ_API_KEY)
 PDF_FILE_PATH = "Gale Encyclopedia of Medicine Vol. 2 (C-F) (1).pdf"
 
 
-# Dynamic Active Model Discovery
 def get_live_groq_models():
     try:
         model_list = [m.id for m in groq_client.models.list().data]
@@ -36,61 +33,70 @@ AVAILABLE_CHAT_MODELS = get_live_groq_models()
 
 
 # =========================================================
-# 1. SMART DEMOGRAPHIC RAG ENGINE
+# ULTRA-LIGHTWEIGHT RAG ENGINE (< 40MB RAM - No OOM Crash)
 # =========================================================
-class PartitionedMedicalRAG:
+class LightweightMedicalRAG:
     def __init__(self, pdf_path: str):
-        print("[*] Initializing Semantic Vector Database...")
-        self.encoder = SentenceTransformer("all-MiniLM-L6-v2")
-        self.chunks = []
-        self.embeddings = None
-        self._build(pdf_path)
+        print("[*] Initializing Lightweight Medical Knowledge Base...")
+        self.chunks: List[str] = []
+        self._load_pdf_data(pdf_path)
 
-    def _build(self, pdf_path: str):
+    def _load_pdf_data(self, pdf_path: str):
         raw = []
         if os.path.exists(pdf_path):
-            reader = PdfReader(pdf_path)
-            for page in reader.pages[:80]:
-                txt = page.extract_text()
-                if txt:
-                    words = txt.split()
-                    for i in range(0, len(words), 80):
-                        c = " ".join(words[i : i + 80])
-                        if len(c) > 30:
-                            raw.append(c)
-        else:
+            try:
+                reader = PdfReader(pdf_path)
+                for page in reader.pages[:60]:
+                    txt = page.extract_text()
+                    if txt:
+                        words = txt.split()
+                        for i in range(0, len(words), 80):
+                            c = " ".join(words[i : i + 80])
+                            if len(c) > 35:
+                                raw.append(c)
+            except Exception as e:
+                print(f"[!] PDF reading notice: {e}")
+
+        if not raw:
             raw = [
-                "Phimosis is a condition where the foreskin cannot be retracted over the glans penis in males. It is anatomically impossible in females.",
-                "Dengue viral infection causes sudden high fever, thrombocytopenia (low platelets), and severe joint pain.",
-                "Celiac disease causes digestive inflammation due to gluten sensitivity across all adults.",
-                "Fever, dehydration, and pediatric conditions require safe hydration and dosage caution."
+                "Phimosis is a condition where the foreskin cannot be retracted over the glans penis in males. It cannot occur in females.",
+                "Dengue viral fever causes acute high fever, thrombocytopenia (rapid drop in platelets), and severe body ache.",
+                "Celiac disease causes chronic digestive inflammation due to gluten sensitivity across adults.",
+                "Diabetic care requires monitoring fasting blood sugar and maintaining a low glycemic diet.",
+                "Pediatric fever and dehydration require oral rehydration solutions and urgent doctor consult if high."
             ]
+
         self.chunks = raw
-        if self.chunks:
-            embs = self.encoder.encode(self.chunks, convert_to_numpy=True)
-            norms = np.linalg.norm(embs, axis=1, keepdims=True)
-            norms[norms == 0] = 1e-10
-            self.embeddings = embs / norms
-            print(f"[✓] Indexed {len(self.chunks)} verified clinical chunks!")
+        print(f"[✓] Successfully indexed {len(self.chunks)} clinical chunks in memory!")
 
-    def retrieve(self, query: str, top_k: int = 1) -> str:
-        if not self.chunks or self.embeddings is None:
+    def retrieve(self, query: str, top_k: int = 2) -> str:
+        if not self.chunks:
             return ""
-        qv = self.encoder.encode([query], convert_to_numpy=True)[0]
-        qn = np.linalg.norm(qv)
-        if qn > 0:
-            qv = qv / qn
-        scores = np.dot(self.embeddings, qv)
-        top = np.argsort(scores)[::-1][:top_k]
-        return self.chunks[top[0]][:350]
+        
+        query_words = set(re.findall(r"\w+", query.lower()))
+        if not query_words:
+            return self.chunks[0][:300]
+
+        scored_chunks = []
+        for chunk in self.chunks:
+            chunk_words = set(re.findall(r"\w+", chunk.lower()))
+            overlap = len(query_words.intersection(chunk_words))
+            scored_chunks.append((overlap, chunk))
+
+        scored_chunks.sort(key=lambda x: x[0], reverse=True)
+        top_chunks = [c for score, c in scored_chunks[:top_k] if score > 0]
+        
+        if top_chunks:
+            return " ".join(top_chunks)[:400]
+        return self.chunks[0][:300]
 
 
-rag = PartitionedMedicalRAG(PDF_FILE_PATH)
+rag = LightweightMedicalRAG(PDF_FILE_PATH)
 
 # =========================================================
-# 2. FASTAPI SETUP
+# FASTAPI BACKEND
 # =========================================================
-app = FastAPI(title="SwasthyaMitra Backend")
+app = FastAPI(title="SwasthyaMitra API")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -119,24 +125,19 @@ class ChatRequest(BaseModel):
 SYSTEM_PROMPT = """You are "Dr. SwasthyaMitra", an empathetic clinical AI physician.
 Patient Profile: {age} years old, {gender}.
 
-FORMATTING RULES:
-1. Start the first line strictly with one triage tag: [SEVERITY: MILD], [SEVERITY: MODERATE], or [SEVERITY: EMERGENCY].
-2. DO NOT use ASCII markdown tables (pipes '|' or table dividers).
-3. Use clean bold headings and concise bullet points.
-4. Structure your response:
-   - 🩺 Clinical Overview: Clear explanation.
-   - 🔍 Key Facts / Biological Context: Address gender and age anatomy directly (e.g. if a condition like phimosis is male-only, explicitly state that it cannot occur in females).
-   - 💊 Immediate Care & Home Remedies: Safe steps.
-   - ⚠️ When to consult a Doctor / Red flags.
-   - ❓ Diagnostic Follow-Up: Ask exactly 1 relevant question at the end.
+GUIDELINES:
+1. Start the first line strictly with: [SEVERITY: MILD], [SEVERITY: MODERATE], or [SEVERITY: EMERGENCY].
+2. Structure your response clearly:
+   - 🩺 Clinical Overview: Simple explanation.
+   - 🔍 Key Facts / Biological Context: Address gender and age anatomy explicitly (e.g. if condition like phimosis is male-only, clearly state it cannot happen to females).
+   - 💊 Immediate Care & Safe Measures.
+   - ⚠️ When to consult a Doctor / Emergency (108/112).
+   - ❓ Diagnostic Follow-Up: Ask 1 relevant question at the end.
 
-5. NON-HEALTH GUARDRAIL: If query is completely unrelated to healthcare, medicine, anatomy, lab tests, or nutrition, politely decline and instruct to ask medical questions only.
+3. NON-HEALTH GUARDRAIL: If query is completely unrelated to health/medicine, politely refuse.
+4. DO NOT use ASCII pipe tables. Respond politely in {language}.
 
-Respond in {language}.
-
-Reference Context:
-{context}
-"""
+Context: {context}"""
 
 
 def extract_triage_severity(text: str):
@@ -149,11 +150,16 @@ def extract_triage_severity(text: str):
     return "MILD", text
 
 
+@app.get("/")
+def health_check():
+    return {"status": "online", "service": "SwasthyaMitra AI"}
+
+
 @app.post("/chat")
 def chat_endpoint(req: ChatRequest):
     q = req.message.strip()
     lang = req.language or "Hinglish"
-    
+
     try:
         age_int = int(str(req.age).split()[0]) if req.age else 24
     except Exception:
@@ -161,14 +167,12 @@ def chat_endpoint(req: ChatRequest):
 
     gender_str = str(req.gender) if req.gender else "Male"
 
-    # Fast Greeting Handler
     if q.lower() in ["hi", "hello", "hey", "namaste", "hii", "hlo"]:
         return {
-            "reply": "Namaste! 🙏 Main Dr. SwasthyaMitra hoon. Aapko kya health problem, symptom ya medical question hai?",
+            "reply": "Namaste! 🙏 Main Dr. SwasthyaMitra hoon. Aapko kya health concern ya medical query hai?",
             "triage": "MILD"
         }
 
-    # Hospital Shortcut
     if any(k in q.lower() for k in ["hospital", "clinic", "aspatal", "doctor nearby"]):
         if req.latitude and req.longitude:
             link = f"https://www.google.com/maps/search/hospitals+near+me/@{req.latitude},{req.longitude},14z"
