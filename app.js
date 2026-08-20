@@ -63,14 +63,14 @@ const COMMON_SUGGESTIONS = [
   "Chest Pain & Shortness of Breath",
   "Stomach Pain & Cramps",
   "Acid Reflux & Heartburn",
-  "Skin Rash & Itching",
+  "Skin Rash, Itching & Redness",
   "Blood Test: Platelets & Hemoglobin",
   "Lab Report: High Blood Sugar / HbA1c",
   "CBC Blood Test Interpretation",
+  "Medicine Usage & Dosage Check",
   "Recovery Diet Chart for Dengue",
   "Diabetic Diet Chart (Veg)",
-  "Diet for High Blood Pressure & Heart Care",
-  "Diet for Celiac Disease (Gluten Free)"
+  "Diet for High Blood Pressure & Heart Care"
 ];
 
 // Open / Close Modals
@@ -142,7 +142,7 @@ setInterval(() => {
   const curTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
   savedReminders.forEach(r => {
     if (r.time === curTime && Notification.permission === "granted") {
-      new Notification("💊 SwasthyaMitra Medicine Reminder", {
+      new Notification("💊 MediNova Medicine Reminder", {
         body: `Time to take your scheduled dose: ${r.name}`,
         icon: "https://cdn-icons-png.flaticon.com/512/2966/2966327.png"
       });
@@ -246,7 +246,7 @@ sendWaSos.addEventListener("click", () => {
     return;
   }
   const locStr = userLocation.latitude ? `https://maps.google.com/?q=${userLocation.latitude},${userLocation.longitude}` : "Location not accessible";
-  const msg = encodeURIComponent(`🚨 EMERGENCY MEDICAL ALERT!\nI am experiencing acute health symptoms and require immediate medical assistance.\nMy Location: ${locStr}\nSent via SwasthyaMitra AI.`);
+  const msg = encodeURIComponent(`🚨 EMERGENCY MEDICAL ALERT!\nI am experiencing acute health symptoms and require immediate medical assistance.\nMy Location: ${locStr}\nSent via MediNova AI.`);
   window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${msg}`, "_blank");
 });
 
@@ -268,7 +268,7 @@ function formatMedicalResponse(rawText) {
     let l = line.trim();
     if (!l) return;
 
-    if (l.startsWith("###") || l.startsWith("##") || (l.includes(":") && (l.includes("Overview") || l.includes("Causes") || l.includes("Steps") || l.includes("Care") || l.includes("Diet") || l.includes("Emergency") || l.includes("Follow") || l.includes("Findings") || l.includes("Facts")))) {
+    if (l.startsWith("###") || l.startsWith("##") || (l.includes(":") && (l.includes("Overview") || l.includes("Causes") || l.includes("Steps") || l.includes("Care") || l.includes("Diet") || l.includes("Emergency") || l.includes("Follow") || l.includes("Findings") || l.includes("Facts") || l.includes("Assessment")))) {
       if (insideList) { formattedHtml += "</ul>"; insideList = false; }
       
       const headingText = l.replace(/^[#\d.\s:-]+/, "").replace(/[*_]/g, "").trim();
@@ -309,7 +309,7 @@ function formatMedicalResponse(rawText) {
 function renderIntakeWelcome() {
   chatBox.innerHTML = `
     <div class="bubble bot">
-      <p>Namaste! 🙏 I am <strong>Dr. SwasthyaMitra AI</strong>.</p>
+      <p>Namaste! 🙏 I am <strong>Dr. MediNova AI</strong>.</p>
       <p>Aapko accurate aur safe medical advice dene ke liye, kripya apni basic details select karein:</p>
       
       <div class="intake-card" id="intake-form">
@@ -336,7 +336,7 @@ function renderIntakeWelcome() {
     userProfile = { age: ageVal, gender: genderVal, completed: true };
     document.getElementById("intake-form").remove();
 
-    appendBubble("bot", `✅ <strong>Profile Saved!</strong> (Age: ${ageVal} yrs, Gender: ${genderVal})<br>Aap symptoms likh sakte hain, 📷 Live Camera se rash/report ki photo le sakte hain, ya 🎙️ mic button dabayein.`);
+    appendBubble("bot", `✅ <strong>Profile Saved!</strong> (Age: ${ageVal} yrs, Gender: ${genderVal})<br>Aap symptoms likh sakte hain, 📷 Live Camera se Report / Medicine / Skin Rash ki photo scan kar sakte hain, ya 🎙️ mic button dabayein.`);
   });
 }
 
@@ -511,7 +511,7 @@ function appendBubble(sender, text, imgData = null, triage = null) {
     content += `<div class="triage-badge ${badgeClass}"><i class="fa-solid ${badgeIcon}"></i> Triage: ${triage}</div>`;
   }
   if (imgData) {
-    content += `<img src="${imgData}" class="bubble-img" style="max-width:200px;border-radius:10px;margin-bottom:8px;display:block;" alt="Captured/Uploaded Image">`;
+    content += `<img src="${imgData}" class="bubble-img" style="max-width:200px;border-radius:10px;margin-bottom:8px;display:block;" alt="Captured Medical Image">`;
   }
 
   if (sender === "bot") {
@@ -549,7 +549,7 @@ downloadPdfBtn.addEventListener("click", () => {
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
-  doc.text("SWASTHYAMITRA CLINICAL HEALTH SUMMARY", 14, 14);
+  doc.text("MEDINOVA CLINICAL HEALTH SUMMARY", 14, 14);
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.text("Verified AI Clinical Triage & Patient Guidance Report", 14, 20);
@@ -609,9 +609,9 @@ downloadPdfBtn.addEventListener("click", () => {
   doc.setFontSize(7.5);
   doc.setTextColor(148, 163, 184);
   doc.setFont("helvetica", "italic");
-  doc.text("Notice: Generated by SwasthyaMitra clinical decision support AI. Consult a licensed physician for medical prescriptions.", 14, 286);
+  doc.text("Notice: Generated by MediNova clinical decision support AI. Consult a licensed physician for prescription medication.", 14, 286);
 
-  doc.save(`SwasthyaMitra_Clinical_Report_${Date.now()}.pdf`);
+  doc.save(`MediNova_Clinical_Report_${Date.now()}.pdf`);
 });
 
 // Send Message Flow
@@ -621,7 +621,7 @@ async function sendMessage() {
 
   if (!text && !imgToSend) return;
 
-  appendBubble("user", text || "Analyzing image / lab report...", imgToSend);
+  appendBubble("user", text || "Scanning attached medical image / report...", imgToSend);
 
   userInput.value = "";
   currentBase64Image = null;
@@ -634,7 +634,7 @@ async function sendMessage() {
   doctorLoader.id = "doctor-active-loader";
   doctorLoader.innerHTML = `
     <span class="doctor-avatar-anim">👨‍⚕️</span>
-    <span class="doc-thinking-text">Dr. SwasthyaMitra is analyzing clinical data & context...</span>
+    <span class="doc-thinking-text">Dr. MediNova is inspecting clinical data & report findings...</span>
   `;
   chatBox.appendChild(doctorLoader);
   chatBox.scrollTop = chatBox.scrollHeight;
@@ -660,7 +660,7 @@ async function sendMessage() {
     if (data.reply) {
       appendBubble("bot", data.reply, null, data.triage || null);
       speakText(data.reply);
-      consultationLogs.push({ q: text || "Clinical Consultation", a: data.reply });
+      consultationLogs.push({ q: text || "Clinical Image Scan", a: data.reply });
       
       setTimeout(() => {
         chatBox.scrollTop = chatBox.scrollHeight;
@@ -668,7 +668,7 @@ async function sendMessage() {
     }
   } catch (err) {
     document.getElementById("doctor-active-loader")?.remove();
-    appendBubble("bot", "⚠️ Backend server connection error. Make sure `main.py` is running on port 8000.");
+    appendBubble("bot", "⚠️ Backend server connection error. Please try again.");
   }
 }
 
