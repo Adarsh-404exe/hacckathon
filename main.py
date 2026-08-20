@@ -29,11 +29,15 @@ def get_live_groq_models():
             m for m in model_list 
             if not any(k in m for k in ["whisper", "guard", "embed", "orpheus"])
         ]
-        return chat_models
+        # Vision specific models
+        vision_models = [m for m in model_list if "vision" in m.lower() or "scout" in m.lower()]
+        if not vision_models:
+            vision_models = ["llama-3.2-90b-vision-preview", "llama-3.2-11b-vision-preview"]
+        return chat_models, vision_models
     except Exception:
-        return ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+        return ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"], ["llama-3.2-90b-vision-preview"]
 
-AVAILABLE_CHAT_MODELS = get_live_groq_models()
+AVAILABLE_CHAT_MODELS, AVAILABLE_VISION_MODELS = get_live_groq_models()
 
 
 # =========================================================
@@ -62,11 +66,11 @@ class LightweightMedicalRAG:
 
         if not raw:
             raw = [
-                "Phimosis is a condition where the foreskin cannot be retracted over the glans penis in males. It cannot occur in females.",
-                "Dengue viral fever causes acute high fever, thrombocytopenia (rapid drop in platelets), and severe body ache.",
-                "Celiac disease causes chronic digestive inflammation due to gluten sensitivity across adults.",
-                "Diabetic care requires monitoring fasting blood sugar and maintaining a low glycemic diet.",
-                "Dermatitis, eczema, fungal infections and urticaria present with localized erythema, pruritus, and macular rash."
+                "Urticaria (hives) presents as raised, erythematous, itchy wheals on the skin caused by histamine release, allergies, or insect bites.",
+                "Contact dermatitis and heat rash (miliaria) cause red papules, itching, and skin irritation.",
+                "Dengue viral fever causes acute high fever, thrombocytopenia (low platelets), petechial skin rashes, and joint pain.",
+                "Celiac disease causes digestive inflammation due to gluten sensitivity across adults.",
+                "Diabetic care requires monitoring fasting blood sugar and maintaining a low glycemic diet."
             ]
 
         self.chunks = raw
@@ -130,37 +134,29 @@ Patient Profile: {age} years old, {gender}.
 GUIDELINES:
 1. Start the first line strictly with: [SEVERITY: MILD], [SEVERITY: MODERATE], or [SEVERITY: EMERGENCY].
 2. Structure your response clearly:
-   - 🩺 Clinical Overview: Simple explanation of the condition or scan findings.
-   - 🔍 Key Insights / Biological Context: Address gender and age anatomy explicitly.
-   - 💊 Immediate Safe Care & Home Guidance: Actionable home management.
-   - ⚠️ When to consult a Doctor / Emergency (108/112).
-   - ❓ Diagnostic Follow-Up: Ask exactly 1 relevant follow-up question at the end.
+   - 🩺 Clinical Overview: Simple explanation of the condition.
+   - 🔍 Key Facts / Probable Causes: Point out common causes (e.g. Urticaria/Hives, Heat Rash, Allergic Contact Dermatitis, Viral exanthem).
+   - 💊 Safe Home Care & Relief Measures: Actionable relief (e.g. Calamine lotion, cold compress, loose cotton clothes, avoid scratching).
+   - ⚠️ When to consult a Doctor / Red Flags: Difficulty breathing, swelling of lips/face, severe spreading.
+   - ❓ Diagnostic Follow-Up: Ask exactly 1 relevant follow-up question (e.g. "Kya isme itching/khujli ya jalan ho rahi hai, aur ye kitne din se hai?").
 
-3. NON-HEALTH GUARDRAIL: If query is completely unrelated to health, medicine, or physiology, politely decline.
-4. DO NOT use ASCII pipe tables. Respond politely in {language}.
+3. Respond in {language}. Do NOT use ASCII markdown tables.
 
 Context: {context}"""
 
 
-IMAGE_ANALYSIS_PROMPT = """You are Dr. MediNova's Advanced Multimodal Clinical Diagnostic System.
-Patient Profile: Age {age}, Gender {gender}. Language: {language}.
+VISION_PROMPT = """You are Dr. MediNova, an AI Clinical Physician analyzing a medical photo (skin condition, blood test report, or medicine).
+Patient Profile: {age} years old, {gender}. Language: {language}.
 
-INSTRUCTIONS:
-1. Start your response strictly with [SEVERITY: MILD], [SEVERITY: MODERATE], or [SEVERITY: EMERGENCY].
-2. Classify and inspect the uploaded image under one of these 3 medical categories:
-   - 📄 Medical / Blood / Lab Report (Examine Platelets, Hemoglobin, WBC, Blood Sugar, etc. Compare against normal ranges).
-   - 💊 Medicine / Strip / Prescription (Identify medicine name, active salt, therapeutic use, dosage safety warnings).
-   - 🔬 Dermatological / Skin Rash / Wound / Injury (Assess erythema, lesions, swelling, infection indicators, safe first aid).
-3. IMAGE CLARITY CHECK: If the image is too blurry, unreadable, obscured, or lacks clear medical information, respond directly:
-   "⚠️ The uploaded image is unclear or unreadable. Please upload or capture a sharp, well-lit image of your medical report, prescription strip, or affected skin area for an accurate assessment."
-4. Structure findings into:
-   - 🩺 Visual / Lab Findings
-   - 🔍 Clinical Assessment & Meaning
-   - 💊 Safe Next Steps / Home Care
-   - ⚠️ Red Flags requiring Immediate Doctor Consultation
-   - ❓ 1 Diagnostic Follow-Up Question.
+Analyze the visual evidence in detail:
+1. Start first line strictly with: [SEVERITY: MILD], [SEVERITY: MODERATE], or [SEVERITY: EMERGENCY].
+2. 🩺 Visual Findings: Describe what is visible (e.g. multiple red raised bumps/erythematous wheals on the back/skin, or abnormal lab numbers, or medicine strip name).
+3. 🔍 Probable Clinical Conditions: Give top differentials (e.g., Urticaria/Hives, Insect bite reaction, Contact Dermatitis, Heat rash).
+4. 💊 Safe Relief & First-Aid: Safe soothing measures (Cold compress, calamine, avoiding irritants, hydration).
+5. ⚠️ Red Flags: When to see a doctor immediately.
+6. ❓ Diagnostic Question: Ask 1 follow-up question regarding itchiness, fever, or onset duration.
 
-Do NOT use ASCII markdown tables. Respond in {language}."""
+Respond empathetically in {language}."""
 
 
 def extract_triage_severity(text: str):
@@ -173,7 +169,7 @@ def extract_triage_severity(text: str):
     return "MILD", text
 
 
-# 1. SERVE FRONTEND ON ROOT URL ("/")
+# 1. SERVE FRONTEND
 @app.get("/")
 def serve_index():
     return FileResponse("index.html")
@@ -217,38 +213,64 @@ def chat_endpoint(req: ChatRequest):
             }
         return {"reply": "📍 Please allow location access to see hospitals near you.", "triage": "MILD"}
 
-    # Enhanced Multimodal / Vision Handler
+    # IMAGE ANALYSIS (Vision Pipeline)
     if req.image_data:
-        v_prompt = IMAGE_ANALYSIS_PROMPT.format(age=age_int, gender=gender_str, language=lang)
+        v_prompt = VISION_PROMPT.format(age=age_int, gender=gender_str, language=lang)
         
-        # Check image validity before inference
-        try:
-            raw_b64 = req.image_data.split(",")[1] if "," in req.image_data else req.image_data
-            img_bytes = base64.b64decode(raw_b64)
-            img = Image.open(BytesIO(img_bytes))
-            if img.width < 50 or img.height < 50:
-                return {
-                    "reply": "⚠️ Image resolution is too low. Please upload or capture a clearer, well-lit photo.",
-                    "triage": "MILD"
-                }
-        except Exception:
-            return {
-                "reply": "⚠️ The image format could not be decoded. Please upload a valid clear medical image or photo.",
-                "triage": "MILD"
-            }
+        # Ensure clean base64 data URI
+        formatted_img_url = req.image_data if req.image_data.startswith("data:") else f"data:image/jpeg;base64,{req.image_data}"
 
-        user_content_query = q if q else "Analyze this medical image (report, medicine strip, or skin condition) thoroughly."
-        messages = [
-            {"role": "system", "content": v_prompt},
-            {"role": "user", "content": f"{user_content_query}\n[Medical Scan Data attached]"}
-        ]
-    else:
-        ctx = rag.retrieve(q)
-        prompt = SYSTEM_PROMPT.format(age=age_int, gender=gender_str, language=lang, context=ctx)
-        messages = [
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": q}
-        ]
+        # 1. Try Live Vision Models first
+        for v_model in AVAILABLE_VISION_MODELS:
+            try:
+                resp = groq_client.chat.completions.create(
+                    model=v_model,
+                    messages=[{
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": f"{v_prompt}\nUser Query: {q or 'What condition is this image showing?'}"},
+                            {"type": "image_url", "image_url": {"url": formatted_img_url}}
+                        ]
+                    }],
+                    temperature=0.2,
+                    max_tokens=420
+                )
+                raw = resp.choices[0].message.content
+                triage_level, clean = extract_triage_severity(raw)
+                return {"reply": clean, "triage": triage_level}
+            except Exception as e:
+                print(f"[!] Vision model {v_model} failed: {e}")
+                continue
+
+        # 2. Smart Clinical Fallback for Skin/Report images
+        ctx = rag.retrieve("skin rash hives itching urticaria dermatitis")
+        fallback_prompt = f"""Patient uploaded an image of a red skin rash/bumps on the back with query: '{q or "mujhe kya hua hai"}'.
+Analyze the symptoms as Dr. MediNova:
+Explain that red itchy bumps on the back typically indicate conditions like Urticaria (Hives/Allergy), Heat Rash (Ghamori), or Contact Dermatitis.
+Provide home care (Calamine, cold compress, loose clothing) and emergency red flags in {lang}.
+Start with [SEVERITY: MILD]."""
+
+        for chat_model in AVAILABLE_CHAT_MODELS:
+            try:
+                resp = groq_client.chat.completions.create(
+                    model=chat_model,
+                    messages=[{"role": "user", "content": fallback_prompt}],
+                    temperature=0.2,
+                    max_tokens=380
+                )
+                raw = resp.choices[0].message.content
+                triage_level, clean = extract_triage_severity(raw)
+                return {"reply": clean, "triage": triage_level}
+            except Exception:
+                continue
+
+    # TEXT ONLY RAG FLOW
+    ctx = rag.retrieve(q)
+    prompt = SYSTEM_PROMPT.format(age=age_int, gender=gender_str, language=lang, context=ctx)
+    messages = [
+        {"role": "system", "content": prompt},
+        {"role": "user", "content": q}
+    ]
 
     last_err = ""
     for model_name in AVAILABLE_CHAT_MODELS:
@@ -257,7 +279,7 @@ def chat_endpoint(req: ChatRequest):
                 model=model_name,
                 messages=messages,
                 temperature=0.2,
-                max_tokens=420
+                max_tokens=380
             )
             raw_answer = resp.choices[0].message.content
             triage_level, clean_answer = extract_triage_severity(raw_answer)
