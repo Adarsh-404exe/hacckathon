@@ -4,6 +4,8 @@ from typing import List, Optional, Union, Dict
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from groq import Groq
 from pydantic import BaseModel
 from pypdf import PdfReader
@@ -33,11 +35,10 @@ AVAILABLE_CHAT_MODELS = get_live_groq_models()
 
 
 # =========================================================
-# ULTRA-LIGHTWEIGHT RAG ENGINE (< 40MB RAM - No OOM Crash)
+# ULTRA-LIGHTWEIGHT RAG ENGINE (< 40MB RAM)
 # =========================================================
 class LightweightMedicalRAG:
     def __init__(self, pdf_path: str):
-        print("[*] Initializing Lightweight Medical Knowledge Base...")
         self.chunks: List[str] = []
         self._load_pdf_data(pdf_path)
 
@@ -67,7 +68,6 @@ class LightweightMedicalRAG:
             ]
 
         self.chunks = raw
-        print(f"[✓] Successfully indexed {len(self.chunks)} clinical chunks in memory!")
 
     def retrieve(self, query: str, top_k: int = 2) -> str:
         if not self.chunks:
@@ -94,9 +94,9 @@ class LightweightMedicalRAG:
 rag = LightweightMedicalRAG(PDF_FILE_PATH)
 
 # =========================================================
-# FASTAPI BACKEND
+# FASTAPI APP SETUP
 # =========================================================
-app = FastAPI(title="SwasthyaMitra API")
+app = FastAPI(title="SwasthyaMitra Unified App")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -150,11 +150,21 @@ def extract_triage_severity(text: str):
     return "MILD", text
 
 
+# 1. SERVE FRONTEND ON ROOT URL ("/")
 @app.get("/")
-def health_check():
-    return {"status": "online", "service": "SwasthyaMitra AI"}
+def serve_index():
+    return FileResponse("index.html")
+
+@app.get("/style.css")
+def serve_css():
+    return FileResponse("style.css")
+
+@app.get("/app.js")
+def serve_js():
+    return FileResponse("app.js")
 
 
+# 2. CHAT API ENDPOINT
 @app.post("/chat")
 def chat_endpoint(req: ChatRequest):
     q = req.message.strip()
