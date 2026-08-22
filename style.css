@@ -31,9 +31,7 @@ body {
   line-height: 1.5;
 }
 
-/* =========================================================
-   NAVBAR (Adaptive Flex)
-   ========================================================= */
+/* Navbar */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -123,9 +121,7 @@ body {
   background: var(--primary-dark);
 }
 
-/* =========================================================
-   HERO SECTION
-   ========================================================= */
+/* Hero Section */
 .hero-section {
   padding: 50px 6% 40px;
   text-align: center;
@@ -205,9 +201,7 @@ body {
   transform: translateY(-2px);
 }
 
-/* =========================================================
-   SECTIONS & GRIDS
-   ========================================================= */
+/* Sections */
 .section {
   padding: 50px 6%;
 }
@@ -295,7 +289,7 @@ body {
   color: #334155;
 }
 
-/* Reminder Page Card */
+/* Reminder Card */
 .reminder-page-card {
   background: #ffffff;
   border: 1px solid var(--border);
@@ -404,9 +398,7 @@ body {
   color: #fff;
 }
 
-/* =========================================================
-   MODALS (CAMERA & SOS)
-   ========================================================= */
+/* Modals */
 .camera-modal, .sos-modal {
   display: none;
   position: fixed;
@@ -528,9 +520,7 @@ body {
   font-size: 0.82rem;
 }
 
-/* =========================================================
-   RESPONSIVE FLOATING CHATBOT MODAL
-   ========================================================= */
+/* Chatbot Modal */
 .chat-modal {
   display: none;
   position: fixed;
@@ -649,7 +639,7 @@ body {
 .header-btn.active-voice { color: var(--primary); background: #e0f2fe; }
 .header-btn.muted { color: var(--danger); background: #fee2e2; }
 
-/* Chat Chips */
+/* Quick Chips */
 .chat-chips {
   display: flex;
   gap: 6px;
@@ -680,7 +670,7 @@ body {
   border-color: var(--primary);
 }
 
-/* Messages Area */
+/* Chat Messages */
 .chat-messages {
   flex: 1;
   padding: 14px;
@@ -770,7 +760,6 @@ body {
 .chat-section-header {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #0369a1;
   margin-top: 8px;
   margin-bottom: 4px;
   display: flex;
@@ -949,9 +938,7 @@ body {
   100% { transform: scale(1); }
 }
 
-/* =========================================================
-   RESPONSIVE MEDIA QUERIES (Mobile & Tablet)
-   ========================================================= */
+/* Mobile Responsiveness */
 @media (max-width: 768px) {
   .navbar {
     padding: 12px 4%;
@@ -967,7 +954,7 @@ body {
   }
 
   .nav-links a {
-    display: none; /* Keep buttons clean on phone */
+    display: none;
   }
 
   .hero-section {
@@ -1000,7 +987,6 @@ body {
     gap: 18px;
   }
 
-  /* Fullscreen App Mode for Chatbot on Mobile */
   .chat-modal {
     padding: 0;
   }
