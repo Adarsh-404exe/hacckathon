@@ -1,25 +1,38 @@
 const BACKEND_URL = "/chat";
 const $ = (id) => document.getElementById(id);
 
-let state = { muted: false, img: null, profile: { age: 24, gender: "Transgender", done: false }, loc: { lat: 26.9124, lon: 75.7873 }, logs: [], reminders: JSON.parse(localStorage.getItem("med_rem") || "[]") };
+let state = {
+  img: null,
+  profile: { age: 24, gender: "Transgender", done: false },
+  loc: { lat: 26.9124, lon: 75.7873 },
+  logs: [],
+  reminders: JSON.parse(localStorage.getItem("med_rem") || "[]")
+};
 
-// Register PWA Service Worker
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
 
-// Modal Controllers
+// Modal Toggle
 const toggle = (el, show) => el.style.display = show ? "flex" : "none";
-$("nav-open-chat").onclick = $("hero-chat-btn").onclick = () => { toggle($("chat-modal"), true); if (!state.profile.done) renderProfile(); $("user-input").focus(); };
+$("nav-open-chat").onclick = $("hero-chat-btn").onclick = () => {
+  toggle($("chat-modal"), true);
+  if (!state.profile.done) renderProfile();
+  $("user-input").focus();
+};
 $("close-chat").onclick = () => { toggle($("chat-modal"), false); window.speechSynthesis.cancel(); };
 $("open-sos-btn").onclick = $("hero-sos-btn").onclick = () => { toggle($("sos-modal"), true); getGPS(); };
 $("close-sos").onclick = () => toggle($("sos-modal"), false);
 $("hero-reminder-btn").onclick = () => $("reminders").scrollIntoView({ behavior: "smooth" });
 
-// GPS
+// Fast GPS
 function getGPS(cb) {
   if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(p => { state.loc = { lat: p.coords.latitude, lon: p.coords.longitude }; if (cb) cb(); }, () => { if (cb) cb(); }, { timeout: 4000 });
+    navigator.geolocation.getCurrentPosition(
+      p => { state.loc = { lat: p.coords.latitude, lon: p.coords.longitude }; if (cb) cb(); },
+      () => { if (cb) cb(); },
+      { timeout: 3500 }
+    );
   } else if (cb) cb();
 }
 
@@ -30,25 +43,38 @@ $("send-wa-sos").onclick = () => {
   $("send-wa-sos").innerText = "Getting GPS...";
   getGPS(() => {
     $("send-wa-sos").innerText = "Send Live GPS";
-    window.location.href = `https://api.whatsapp.com/send?phone=${p}&text=${encodeURIComponent(`🚨 EMERGENCY MEDICAL ALERT!\nLive Location: https://maps.google.com/?q=${state.loc.lat},${state.loc.lon}\nSent via MediNova AI.`)}`;
+    window.location.href = `https://api.whatsapp.com/send?phone=${p}&text=${encodeURIComponent(`🚨 EMERGENCY MEDICAL SOS ALERT!\nLive Location: https://maps.google.com/?q=${state.loc.lat},${state.loc.lon}\nSent via MediNova AI.`)}`;
   });
 };
 
-// Hospitals
+// Hospitals Locator
 $("find-hospitals-btn").onclick = () => {
   $("loc-status-text").innerText = "Locating via GPS...";
   getGPS(() => {
     $("loc-status-text").innerText = `GPS Active ✅ (${state.loc.lat.toFixed(2)}°, ${state.loc.lon.toFixed(2)}°)`;
     $("hospitals-container").innerHTML = `
-      <div class="hospital-card"><div class="h-header"><h3>Emergency Trauma Care</h3><span class="h-badge">24/7 Open</span></div><p class="h-desc"><i class="fa-solid fa-location-dot"></i> Nearest ICU Center (~1.2 km)</p><a href="https://www.google.com/maps/search/emergency+hospital+near+me/@${state.loc.lat},${state.loc.lon},14z" target="_blank" class="h-btn">Open Google Maps Route</a></div>
-      <div class="hospital-card"><div class="h-header"><h3>City Specialty Hospital</h3><span class="h-badge">Ambulance 102</span></div><p class="h-desc"><i class="fa-solid fa-location-dot"></i> Multi-Specialty Unit (~2.5 km)</p><a href="https://www.google.com/maps/search/hospitals+near+me/@${state.loc.lat},${state.loc.lon},14z" target="_blank" class="h-btn">Open Google Maps Route</a></div>`;
+      <div class="hospital-card">
+        <div class="h-header"><h3>Emergency Trauma & ICU</h3><span class="h-badge">24/7 Open</span></div>
+        <p class="h-desc"><i class="fa-solid fa-location-dot"></i> Emergency Care (~1.2 km)</p>
+        <a href="https://www.google.com/maps/search/emergency+hospital+near+me/@${state.loc.lat},${state.loc.lon},14z" target="_blank" class="h-btn">Open Google Maps Route</a>
+      </div>
+      <div class="hospital-card">
+        <div class="h-header"><h3>City Multi-Specialty Hospital</h3><span class="h-badge">Ambulance 102</span></div>
+        <p class="h-desc"><i class="fa-solid fa-location-dot"></i> OPD & Emergency (~2.5 km)</p>
+        <a href="https://www.google.com/maps/search/hospitals+near+me/@${state.loc.lat},${state.loc.lon},14z" target="_blank" class="h-btn">Open Google Maps Route</a>
+      </div>`;
   });
 };
 
-// Pill Reminders (PWA + Audio)
+// Medicine Reminders
 function renderReminders() {
-  $("reminders-container").innerHTML = state.reminders.length ? state.reminders.map((r, i) => `
-    <div class="schedule-pill-item"><span><i class="fa-solid fa-pills" style="color:var(--primary)"></i> <strong>${r.name}</strong> at <strong>${r.time}</strong></span><button onclick="delRem(${i})" style="border:none;background:none;color:var(--danger);cursor:pointer;"><i class="fa-solid fa-trash"></i></button></div>`).join("") : '<p style="color:var(--text-muted);font-size:0.88rem;">No active schedules yet.</p>';
+  $("reminders-container").innerHTML = state.reminders.length
+    ? state.reminders.map((r, i) => `
+      <div class="schedule-pill-item">
+        <span><i class="fa-solid fa-pills" style="color:var(--primary)"></i> <strong>${r.name}</strong> at <strong>${r.time}</strong></span>
+        <button onclick="delRem(${i})" style="border:none;background:none;color:var(--danger);cursor:pointer;"><i class="fa-solid fa-trash"></i></button>
+      </div>`).join("")
+    : '<p style="color:var(--text-muted);font-size:0.88rem;">No active schedules yet.</p>';
 }
 window.delRem = (i) => { state.reminders.splice(i, 1); localStorage.setItem("med_rem", JSON.stringify(state.reminders)); renderReminders(); };
 
@@ -56,8 +82,7 @@ $("web-save-reminder-btn").onclick = () => {
   const name = $("web-med-name").value.trim(), time = $("web-med-time").value;
   if (!name || !time) return alert("Enter medicine name and time.");
   if ("Notification" in window) Notification.requestPermission();
-  
-  // Calculate delay for Service Worker background trigger
+
   const [h, m] = time.split(":"), now = new Date(), target = new Date();
   target.setHours(h, m, 0, 0);
   if (target < now) target.setDate(target.getDate() + 1);
@@ -114,12 +139,16 @@ $("image-upload").onchange = (e) => {
 };
 $("remove-img-btn").onclick = () => { state.img = null; $("image-upload").value = ""; toggle($("image-preview-container"), false); };
 
-// Chat UI
+// Profile Intake
 function renderProfile() {
   $("chat-box").innerHTML = `
     <div class="bubble bot"><p>Namaste! 🙏 I am <strong>Dr. MediNova AI</strong>. Please select profile:</p>
       <div class="intake-card"><div class="intake-row">
-        <select id="p-gender" class="intake-select"><option value="Male">Male (पुरुष)</option><option value="Female">Female (महिला)</option><option value="Transgender" selected>Transgender (ट्रांसजेंडर)</option></select>
+        <select id="p-gender" class="intake-select">
+          <option value="Male">Male (पुरुष)</option>
+          <option value="Female">Female (महिला)</option>
+          <option value="Transgender" selected>Transgender (ट्रांसजेंडर)</option>
+        </select>
         <input type="number" id="p-age" class="intake-input" value="24" min="1" max="110">
       </div><button id="p-save" class="intake-submit-btn">Save Profile</button></div>
     </div>`;
@@ -130,6 +159,7 @@ function renderProfile() {
   };
 }
 
+// Clean Medical Formatter (Zero Junk)
 function format(txt) {
   return txt.split("\n").map(l => {
     l = l.trim(); if (!l) return "";
@@ -150,34 +180,45 @@ function append(sender, txt, img, triage) {
   $("chat-box").scrollTop = $("chat-box").scrollHeight;
 }
 
-// Messaging
+// Send Query
 async function send() {
   const msg = $("user-input").value.trim(), img = state.img;
   if (!msg && !img) return;
   append("user", msg || "Scanning medical image...", img);
   $("user-input").value = ""; state.img = null; toggle($("image-preview-container"), false);
-  
+
   const loader = document.createElement("div"); loader.className = "bubble bot doctor-thinking";
   loader.innerHTML = `<span class="doctor-avatar-anim">👨‍⚕️</span><span>Dr. MediNova is reviewing...</span>`;
   $("chat-box").appendChild(loader);
-  
+
   try {
     const res = await fetch(BACKEND_URL, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: msg, language: $("language-select").value, image_data: img, age: state.profile.age, gender: state.profile.gender, latitude: state.loc.lat, longitude: state.loc.lon })
+      body: JSON.stringify({
+        message: msg,
+        language: $("language-select").value,
+        image_data: img,
+        age: state.profile.age,
+        gender: state.profile.gender,
+        latitude: state.loc.lat,
+        longitude: state.loc.lon
+      })
     });
     const d = await res.json();
     loader.remove();
     append("bot", d.reply, null, d.triage);
     state.logs.push({ q: msg || "Scan", a: d.reply });
-  } catch (e) { loader.remove(); append("bot", "⚠️ Network error. Please try again."); }
+  } catch (e) {
+    loader.remove();
+    append("bot", "⚠️ Network error. Please try again.");
+  }
 }
 
 $("send-btn").onclick = send;
 $("user-input").onkeypress = (e) => { if (e.key === "Enter") send(); };
 document.querySelectorAll(".chip").forEach(c => c.onclick = () => { $("user-input").value = c.getAttribute("data-q"); send(); });
 
-// PDF
+// PDF Summary Download
 $("download-pdf-btn").onclick = () => {
   if (!state.logs.length) return alert("Complete a consultation first.");
   const doc = new window.jspdf.jsPDF();
