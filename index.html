@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MediNova | Next-Gen AI Health Ecosystem</title>
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -54,7 +54,7 @@
         <h3>Dengue Fever (Breakbone Fever)</h3>
         <p class="outbreak-symptoms"><strong>Key Symptoms:</strong> High sudden fever, pain behind eyes, severe joint/muscle ache, rapid platelet drop, skin rash.</p>
         <div class="outbreak-care">
-          <strong>Action Plan:</strong> Daily platelet monitoring, plenty of coconut water, ORS hydration, and avoid taking Aspirin/Brufen without medical consult.
+          <strong>Action Plan:</strong> Daily platelet monitoring, plenty of coconut water, ORS hydration, Paracetamol for fever (avoid Ibuprofen/Aspirin).
         </div>
       </div>
 
@@ -63,16 +63,16 @@
         <h3>Influenza A/H3N2 & Viral Throat Infection</h3>
         <p class="outbreak-symptoms"><strong>Key Symptoms:</strong> Persistent dry cough, running nose, sore throat, chills, fatigue, mild breathlessness.</p>
         <div class="outbreak-care">
-          <strong>Action Plan:</strong> Warm saline gargles, steam inhalation, paracetamol for fever, wear mask in crowded public places.
+          <strong>Action Plan:</strong> Warm saline gargles, steam inhalation, Paracetamol, wear mask in public places.
         </div>
       </div>
 
       <div class="outbreak-card alert-moderate">
         <div class="outbreak-tag tag-moderate">💧 Water-Borne Alert</div>
         <h3>Typhoid & Acute Gastroenteritis</h3>
-        <p class="outbreak-symptoms"><strong>Key Symptoms:</strong> Step-ladder prolonged fever, abdominal stomach cramps, loose stools, nausea, vomiting.</p>
+        <p class="outbreak-symptoms"><strong>Key Symptoms:</strong> Prolonged fever, abdominal stomach cramps, loose stools, nausea, vomiting.</p>
         <div class="outbreak-care">
-          <strong>Action Plan:</strong> Drink boiled/purified water only, eat fresh warm home food, avoid roadside juices and raw cut salads.
+          <strong>Action Plan:</strong> Drink boiled water, take ORS electrolyte packs, fresh warm home food, avoid raw roadside salads.
         </div>
       </div>
     </div>
@@ -81,20 +81,20 @@
   <!-- MEDICINE REMINDER WEBPAGE SECTION -->
   <section class="section" id="reminders">
     <h2 class="section-title">⏰ Smart Medicine & Hydration Scheduler</h2>
-    <p class="section-subtitle">Never miss your antibiotics, blood pressure, or daily vitamins</p>
+    <p class="section-subtitle">Guaranteed alarm and sound reminders on both Mobile & PC</p>
 
     <div class="reminder-page-card">
       <div class="reminder-page-form">
         <div class="rem-input-group">
           <label><i class="fa-solid fa-pills"></i> Medicine Name</label>
-          <input type="text" id="web-med-name" placeholder="e.g. Paracetamol 650mg or Amoxicillin">
+          <input type="text" id="web-med-name" placeholder="e.g. Paracetamol 650mg, Iron capsule">
         </div>
         <div class="rem-input-group">
           <label><i class="fa-solid fa-clock"></i> Scheduled Time</label>
           <input type="time" id="web-med-time">
         </div>
         <button id="web-save-reminder-btn" class="btn-primary">
-          <i class="fa-solid fa-bell"></i> Enable Browser Reminder
+          <i class="fa-solid fa-bell"></i> Set & Activate Reminder
         </button>
       </div>
 
@@ -108,11 +108,11 @@
   <!-- Nearby Hospitals Section -->
   <section class="section" id="hospitals">
     <h2 class="section-title">🏥 Live GPS Nearby Hospitals</h2>
-    <p class="section-subtitle" id="loc-status-text">Allow location access to discover 24/7 emergency centers around you</p>
+    <p class="section-subtitle" id="loc-status-text">Click below to locate 24/7 emergency centers around you</p>
     
     <div class="hospital-lookup-box" style="text-align: center;">
       <button id="find-hospitals-btn" class="btn-primary" style="margin: 0 auto;">
-        <i class="fa-solid fa-location-crosshairs"></i> Fetch Hospitals Near My Current Location
+        <i class="fa-solid fa-location-crosshairs"></i> Fetch Hospitals Near My Location
       </button>
     </div>
 
@@ -123,7 +123,7 @@
   <div class="camera-modal" id="camera-modal">
     <div class="camera-box">
       <div class="sos-header">
-        <h3><i class="fa-solid fa-camera"></i> Scan Report / Medicine / Skin Condition</h3>
+        <h3><i class="fa-solid fa-camera"></i> Scan Report / Medicine / Skin</h3>
         <button id="close-camera-btn" class="header-btn"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="video-container">
@@ -131,7 +131,7 @@
         <canvas id="webcam-canvas" style="display: none;"></canvas>
       </div>
       <div class="camera-actions">
-        <button id="snap-photo-btn" class="btn-primary"><i class="fa-solid fa-camera-retro"></i> Capture & Analyze Photo</button>
+        <button id="snap-photo-btn" class="btn-primary"><i class="fa-solid fa-camera-retro"></i> Capture & Use Photo</button>
       </div>
     </div>
   </div>
@@ -143,7 +143,7 @@
         <h2><i class="fa-solid fa-triangle-exclamation"></i> Emergency SOS Dispatch</h2>
         <button id="close-sos" class="header-btn"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <p class="sos-desc">If you or someone nearby is experiencing acute symptoms, take immediate action:</p>
+      <p class="sos-desc">If experiencing severe pain, shortness of breath, or bleeding:</p>
       
       <div class="sos-actions-grid">
         <a href="tel:108" class="sos-call-btn call-108">
@@ -152,15 +152,15 @@
         </a>
         <a href="tel:112" class="sos-call-btn call-112">
           <i class="fa-solid fa-shield-heart"></i>
-          <span>Call National Emergency (112)</span>
+          <span>Call Emergency Police/Med (112)</span>
         </a>
       </div>
 
       <div class="sos-whatsapp-box">
         <h4><i class="fa-brands fa-whatsapp"></i> WhatsApp Family SOS Alert</h4>
-        <p>Send your live GPS coordinates and emergency alert to a family member in 1-click:</p>
+        <p>Send your live GPS coordinates & SOS message in 1-click:</p>
         <div class="sos-wa-input-row">
-          <input type="tel" id="sos-phone" placeholder="Family Phone Number (e.g. 919876543210)">
+          <input type="tel" id="sos-phone" placeholder="Phone Number (e.g. 919876543210)">
           <button id="send-wa-sos" class="btn-primary"><i class="fa-brands fa-whatsapp"></i> Send Alert</button>
         </div>
       </div>
@@ -177,7 +177,7 @@
           <div class="avatar-ring"><i class="fa-solid fa-user-doctor"></i></div>
           <div>
             <h3>Dr. MediNova AI</h3>
-            <p class="online-indicator"><span class="pulse"></span> Online | Report, Medicine & Skin Triage</p>
+            <p class="online-indicator"><span class="pulse"></span> Online | Clinical Triage Bot</p>
           </div>
         </div>
 
@@ -208,12 +208,11 @@
         </div>
       </div>
 
-      <!-- Quick Triage Chips -->
+      <!-- Quick Triage Chips (Removed Blood Test Chip) -->
       <div class="chat-chips" id="quick-chips-bar">
         <button class="chip" data-q="What is the recommended recovery diet for Dengue?">🥗 Dengue Diet Chart</button>
-        <button class="chip" data-q="Interpret blood report: Platelets 85,000, Hemoglobin 10.2">🧪 Blood Test Analysis</button>
-        <button class="chip" data-q="I have sudden chest pain radiating to left arm">🚨 Emergency Check</button>
-        <button class="chip" data-q="Find nearest hospitals near me">🏥 Hospitals Nearby</button>
+        <button class="chip" data-q="I have severe sudden chest tightness and left arm pain">🚨 Emergency Check</button>
+        <button class="chip" data-q="Find nearest emergency hospitals near me">🏥 Hospitals Nearby</button>
       </div>
 
       <!-- Messages Screen -->
@@ -231,7 +230,7 @@
       <!-- Input Area -->
       <div class="chat-input-row">
         <!-- Open Live Camera Button -->
-        <button id="open-camera-btn" class="tool-btn" title="Scan Lab Report / Medicine Strip / Skin Rash">
+        <button id="open-camera-btn" class="tool-btn" title="Scan Lab Report / Medicine / Skin Rash">
           <i class="fa-solid fa-camera"></i>
         </button>
 
