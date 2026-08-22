@@ -25,7 +25,7 @@ $("open-sos-btn").onclick = $("hero-sos-btn").onclick = () => { toggle($("sos-mo
 $("close-sos").onclick = () => toggle($("sos-modal"), false);
 $("hero-reminder-btn").onclick = () => $("reminders").scrollIntoView({ behavior: "smooth" });
 
-// Fast GPS
+// GPS Helper
 function getGPS(cb) {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -159,41 +159,77 @@ function renderProfile() {
   };
 }
 
-// Clean Medical Formatter (Zero Junk)
+// Robust Universal Medical Formatter
 function format(txt) {
-  return txt.split("\n").map(l => {
-    l = l.trim(); if (!l) return "";
-    if (l.includes("Overview") || l.includes("Causes") || l.includes("Remedies") || l.includes("Medicines") || l.includes("Doctor"))
-      return `<div class="chat-section-header">${l.replace(/[*#]/g, "")}</div>`;
-    if (l.includes("?")) return `<div class="chat-followup-box">${l.replace(/[*#]/g, "")}</div>`;
-    return `<p style="margin-bottom:3px">${l.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")}</p>`;
-  }).join("");
+  if (!txt) return "<p>No response content.</p>";
+  
+  const lines = txt.split("\n");
+  let output = "";
+
+  lines.forEach(line => {
+    let l = line.trim();
+    if (!l) return;
+
+    if (l.startsWith("###") || l.startsWith("##") || (l.includes(":") && (l.includes("Overview") || l.includes("Causes") || l.includes("Remedies") || l.includes("Medicines") || l.includes("Doctor") || l.includes("Flags") || l.includes("Care")))) {
+      const cleanTitle = l.replace(/^[#\d.\s:-]+/, "").replace(/[*_]/g, "").trim();
+      if (cleanTitle.toLowerCase().includes("flag") || cleanTitle.toLowerCase().includes("doctor") || cleanTitle.toLowerCase().includes("emergency")) {
+        output += `<div class="chat-section-header" style="color:#dc2626; border-color:#fee2e2;"><i class="fa-solid fa-triangle-exclamation"></i> ${cleanTitle}</div>`;
+      } else if (cleanTitle.toLowerCase().includes("remed") || cleanTitle.toLowerCase().includes("home")) {
+        output += `<div class="chat-section-header" style="color:#059669; border-color:#d1fae5;"><i class="fa-solid fa-leaf"></i> ${cleanTitle}</div>`;
+      } else if (cleanTitle.toLowerCase().includes("medicine")) {
+        output += `<div class="chat-section-header" style="color:#0284c7; border-color:#e0f2fe;"><i class="fa-solid fa-pills"></i> ${cleanTitle}</div>`;
+      } else {
+        output += `<div class="chat-section-header"><i class="fa-solid fa-stethoscope"></i> ${cleanTitle}</div>`;
+      }
+    } else if (l.toLowerCase().includes("diagnostic question") || l.toLowerCase().startsWith("quick question") || l.toLowerCase().startsWith("follow-up")) {
+      const qText = l.replace(/^[^:]+:\s*/i, "").replace(/[*_]/g, "").trim();
+      output += `<div class="chat-followup-box"><i class="fa-solid fa-comments"></i> <strong>Doctor's Question:</strong> ${qText}</div>`;
+    } else if (l.startsWith("-") || l.startsWith("*") || /^\d+\./.test(l)) {
+      const bulletText = l.replace(/^[-*\d.]+\s*/, "").replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      output += `<p class="chat-list-item">• ${bulletText}</p>`;
+    } else {
+      const normalText = l.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      output += `<p style="margin-bottom:4px;">${normalText}</p>`;
+    }
+  });
+
+  return output || `<p>${txt}</p>`;
 }
 
 function append(sender, txt, img, triage) {
-  const d = document.createElement("div"); d.className = `bubble ${sender}`;
-  let html = triage ? `<div class="triage-badge triage-${triage.toLowerCase()}">Triage: ${triage}</div>` : "";
+  const d = document.createElement("div"); 
+  d.className = `bubble ${sender}`;
+  
+  let html = triage ? `<div class="triage-badge triage-${triage.toLowerCase()}"><i class="fa-solid fa-shield-heart"></i> Triage: ${triage}</div>` : "";
   if (img) html += `<img src="${img}" style="max-width:180px;border-radius:8px;display:block;margin-bottom:5px;">`;
   html += sender === "bot" ? format(txt) : `<p>${txt}</p>`;
   d.innerHTML = html;
+  
   $("chat-box").appendChild(d);
   $("chat-box").scrollTop = $("chat-box").scrollHeight;
 }
 
-// Send Query
+// Send Query Flow
 async function send() {
   const msg = $("user-input").value.trim(), img = state.img;
   if (!msg && !img) return;
+  
   append("user", msg || "Scanning medical image...", img);
-  $("user-input").value = ""; state.img = null; toggle($("image-preview-container"), false);
+  $("user-input").value = ""; 
+  state.img = null; 
+  toggle($("image-preview-container"), false);
 
-  const loader = document.createElement("div"); loader.className = "bubble bot doctor-thinking";
+  const loader = document.createElement("div"); 
+  loader.className = "bubble bot doctor-thinking";
+  loader.id = "doctor-active-loader";
   loader.innerHTML = `<span class="doctor-avatar-anim">👨‍⚕️</span><span>Dr. MediNova is reviewing...</span>`;
   $("chat-box").appendChild(loader);
+  $("chat-box").scrollTop = $("chat-box").scrollHeight;
 
   try {
     const res = await fetch(BACKEND_URL, {
-      method: "POST", headers: { "Content-Type": "application/json" },
+      method: "POST", 
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         message: msg,
         language: $("language-select").value,
@@ -204,13 +240,19 @@ async function send() {
         longitude: state.loc.lon
       })
     });
+    
     const d = await res.json();
-    loader.remove();
-    append("bot", d.reply, null, d.triage);
-    state.logs.push({ q: msg || "Scan", a: d.reply });
+    $("doctor-active-loader")?.remove();
+    
+    if (d.reply) {
+      append("bot", d.reply, null, d.triage);
+      state.logs.push({ q: msg || "Scan", a: d.reply });
+    } else {
+      append("bot", "⚠️ Server provided an empty response. Please retry.", null, "MILD");
+    }
   } catch (e) {
-    loader.remove();
-    append("bot", "⚠️ Network error. Please try again.");
+    $("doctor-active-loader")?.remove();
+    append("bot", "⚠️ Network connection error. Please tap send again.", null, "MILD");
   }
 }
 
@@ -218,7 +260,7 @@ $("send-btn").onclick = send;
 $("user-input").onkeypress = (e) => { if (e.key === "Enter") send(); };
 document.querySelectorAll(".chip").forEach(c => c.onclick = () => { $("user-input").value = c.getAttribute("data-q"); send(); });
 
-// PDF Summary Download
+// PDF Summary Exporter
 $("download-pdf-btn").onclick = () => {
   if (!state.logs.length) return alert("Complete a consultation first.");
   const doc = new window.jspdf.jsPDF();
