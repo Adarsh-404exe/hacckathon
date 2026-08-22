@@ -65,9 +65,9 @@ class LightweightMedicalRAG:
 
         if not raw:
             raw = [
-                "Platelet counts below 100,000 indicate thrombocytopenia needing dengue testing and close monitoring.",
-                "Hemoglobin below 12 g/dL indicates mild to moderate anemia requiring dietary iron and consultation.",
-                "Emergency first-aid: Paracetamol for acute fever (avoid aspirin in dengue), ORS for severe dehydration."
+                "Abdominal pain can stem from indigestion, gastritis, spasms, acid reflux, or infections.",
+                "Warm water, ginger/jeera tea, light khichdi, and antacids provide relief for gastric discomfort.",
+                "Dengue fever presents with acute high fever, thrombocytopenia (low platelets), and body aches."
             ]
 
         self.chunks = raw
@@ -125,35 +125,39 @@ class ChatRequest(BaseModel):
     history: Optional[List[MessageItem]] = []
 
 
-SYSTEM_PROMPT = """You are "Dr. MediNova", an expert concise clinical AI doctor.
-Patient Profile: {age} yrs old, {gender}.
+SYSTEM_PROMPT = """You are "Dr. MediNova", a clinical AI physician.
+Patient Profile: {age} years old, {gender}.
 
-RESPONSE RULES (STRICT & SHORT):
-1. First line must be: [SEVERITY: MILD], [SEVERITY: MODERATE], or [SEVERITY: EMERGENCY].
-2. Keep explanations SHORT, PRECISE, and bulleted (maximum 120-150 words total).
-3. Structure:
-   - 🩺 Clinical Summary: 1 concise sentence about the core issue/report numbers.
-   - 💊 Safe Emergency First-Aid / Medicines: Mention exact safe OTC medicines with purpose (e.g., Paracetamol 500/650mg for fever/body pain, ORS for dehydration, Calamine lotion / Cetirizine 10mg for rash/allergy, Antacid for reflux). *State caution for pregnancy/kidney*.
-   - ⚠️ Hospital Red Flags: Call 108 immediately if danger signs appear.
-   - ❓ Quick Question: 1 short diagnostic question.
+CORE INSTRUCTIONS:
+1. First line must strictly be: [SEVERITY: MILD], [SEVERITY: MODERATE], or [SEVERITY: EMERGENCY].
+2. FOCUS STRICTLY ON THE USER'S SPECIFIC PROBLEM (Do NOT mention unrelated illnesses like fever or rash if the user is asking about stomach pain, headache, etc.).
+3. STRUCTURE YOUR ANSWER AS FOLLOWS:
+   - 🩺 Clinical Overview: 1-2 empathetic lines explaining why this specific problem happens.
+   - 🔍 Probable Causes: 2-3 bullet points relevant ONLY to their query.
+   - 🌿 Home Remedies (Gharelu Nuskhe): 2-3 practical, effective home relief steps (e.g. warm water, ginger/fennel, diet tips, rest).
+   - 💊 Safe Relief Medicines (Specific to this condition only): Mention 1-2 standard safe OTC options strictly matching their symptom (e.g. Antacids/Digene/Pudin Hara for stomach gas, Paracetamol for pain/fever, etc.).
+   - ⚠️ When to see a Doctor: 1-2 red flag warnings.
+   - ❓ Diagnostic Question: 1 short relevant follow-up question.
 
-Respond in {language}. No ASCII markdown tables.
+Keep the response balanced, helpful, and natural in {language}. No ASCII tables.
 
 Context: {context}"""
 
 
-VISION_PROMPT = """You are Dr. MediNova, an expert clinical physician analyzing a medical scan.
+VISION_PROMPT = """You are Dr. MediNova analyzing a medical image (report, medicine, skin condition, or physical issue).
 Patient Profile: {age} yrs, {gender}. Language: {language}.
 Query: "{query}"
 
-Analyze concisely:
+Analyze specifically:
 1. Start with [SEVERITY: MILD], [SEVERITY: MODERATE], or [SEVERITY: EMERGENCY].
-2. 🩺 Visual/Lab Findings: Identify the exact condition, abnormal values (e.g. low platelets), or medicine name in 1-2 bullet points.
-3. 💊 Suggested First-Aid / Emergency Medicines: Safe relief medicines (e.g. Paracetamol for fever, ORS, Cetirizine, Antacids).
-4. ⚠️ When to consult a Doctor / Red Flags.
-5. ❓ Diagnostic Question: 1 short follow-up question.
+2. 🩺 Visual/Lab Findings: What is seen in the image.
+3. 🔍 What it indicates: Clear explanation.
+4. 🌿 Home Remedies & Safe Self-Care: Practical relief tips.
+5. 💊 Recommended Safe OTC Care: Medicines strictly matching the visible issue.
+6. ⚠️ Red Flags requiring hospital visit.
+7. ❓ 1 Follow-up Question.
 
-Keep response very short (under 140 words) and empathetic in {language}."""
+Respond empathetically in {language}."""
 
 
 def extract_triage_severity(text: str):
@@ -194,7 +198,7 @@ def chat_endpoint(req: ChatRequest):
 
     if q.lower() in ["hi", "hello", "hey", "namaste", "hii", "hlo"] and not req.image_data:
         return {
-            "reply": "Namaste! 🙏 Main Dr. MediNova hoon. Aap medicine strip, blood report, skin rash scan karwa sakte hain ya apna symptom bata sakte hain.",
+            "reply": "Namaste! 🙏 Main Dr. MediNova hoon. Aap medicine strip, blood report, skin rash scan karwa sakte hain ya apna koi symptom bata sakte hain.",
             "triage": "MILD"
         }
 
@@ -208,7 +212,7 @@ def chat_endpoint(req: ChatRequest):
             "triage": "MODERATE"
         }
 
-    # Vision Payload
+    # Vision Handler
     if req.image_data:
         user_query = q if q else "Analyze this medical report, medicine strip, or skin symptom."
         v_prompt = VISION_PROMPT.format(age=age_int, gender=gender_str, language=lang, query=user_query)
@@ -226,7 +230,7 @@ def chat_endpoint(req: ChatRequest):
                         ]
                     }],
                     temperature=0.2,
-                    max_tokens=350
+                    max_tokens=420
                 )
                 raw = resp.choices[0].message.content
                 triage_level, clean = extract_triage_severity(raw)
@@ -237,7 +241,7 @@ def chat_endpoint(req: ChatRequest):
         ctx = rag.retrieve(user_query)
         dynamic_prompt = f"""Patient uploaded image with query: "{user_query}".
 Context: {ctx}
-Provide a short 100-word clinical assessment as Dr. MediNova with safe emergency medicines (Paracetamol, ORS, Calamine) in {lang}.
+Provide a clinical assessment as Dr. MediNova explaining the condition with home remedies and relevant safe medicines in {lang}.
 Start with [SEVERITY: MILD]."""
 
         for chat_model in AVAILABLE_CHAT_MODELS:
@@ -246,7 +250,7 @@ Start with [SEVERITY: MILD]."""
                     model=chat_model,
                     messages=[{"role": "user", "content": dynamic_prompt}],
                     temperature=0.2,
-                    max_tokens=300
+                    max_tokens=400
                 )
                 raw = resp.choices[0].message.content
                 triage_level, clean = extract_triage_severity(raw)
@@ -254,7 +258,7 @@ Start with [SEVERITY: MILD]."""
             except Exception:
                 continue
 
-    # Text RAG
+    # Text RAG Flow
     ctx = rag.retrieve(q)
     prompt = SYSTEM_PROMPT.format(age=age_int, gender=gender_str, language=lang, context=ctx)
     messages = [
@@ -269,7 +273,7 @@ Start with [SEVERITY: MILD]."""
                 model=model_name,
                 messages=messages,
                 temperature=0.2,
-                max_tokens=320
+                max_tokens=420
             )
             raw_answer = resp.choices[0].message.content
             triage_level, clean_answer = extract_triage_severity(raw_answer)
