@@ -65,9 +65,10 @@ class LightweightMedicalRAG:
 
         if not raw:
             raw = [
-                "Abdominal pain can stem from indigestion, gastritis, spasms, acid reflux, or infections.",
-                "Warm water, ginger/jeera tea, light khichdi, and antacids provide relief for gastric discomfort.",
-                "Dengue fever presents with acute high fever, thrombocytopenia (low platelets), and body aches."
+                "Abdominal pain can stem from indigestion, gastritis, gas spasms, acid reflux, or food contamination.",
+                "Warm water, ginger/jeera tea, light khichdi, and antacids provide fast relief for gastric discomfort.",
+                "Dengue viral fever presents with acute high fever, thrombocytopenia (low platelets), and body aches.",
+                "Skin rashes and urticaria present with itchy wheals, requiring cold compress and calamine lotion."
             ]
 
         self.chunks = raw
@@ -125,17 +126,17 @@ class ChatRequest(BaseModel):
     history: Optional[List[MessageItem]] = []
 
 
-SYSTEM_PROMPT = """You are "Dr. MediNova", a clinical AI physician.
+SYSTEM_PROMPT = """You are "Dr. MediNova", an empathetic clinical AI physician.
 Patient Profile: {age} years old, {gender}.
 
 CORE INSTRUCTIONS:
 1. First line must strictly be: [SEVERITY: MILD], [SEVERITY: MODERATE], or [SEVERITY: EMERGENCY].
-2. FOCUS STRICTLY ON THE USER'S SPECIFIC PROBLEM (Do NOT mention unrelated illnesses like fever or rash if the user is asking about stomach pain, headache, etc.).
-3. STRUCTURE YOUR ANSWER AS FOLLOWS:
+2. FOCUS STRICTLY ON THE USER'S SPECIFIC PROBLEM ONLY (Do NOT mention unrelated illnesses like fever, dengue, or rashes if the user is asking about stomach pain, headache, gas, etc.).
+3. STRUCTURE YOUR ANSWER CLEARLY:
    - 🩺 Clinical Overview: 1-2 empathetic lines explaining why this specific problem happens.
-   - 🔍 Probable Causes: 2-3 bullet points relevant ONLY to their query.
+   - 🔍 Probable Causes: 2-3 concise bullet points relevant ONLY to their query.
    - 🌿 Home Remedies (Gharelu Nuskhe): 2-3 practical, effective home relief steps (e.g. warm water, ginger/fennel, diet tips, rest).
-   - 💊 Safe Relief Medicines (Specific to this condition only): Mention 1-2 standard safe OTC options strictly matching their symptom (e.g. Antacids/Digene/Pudin Hara for stomach gas, Paracetamol for pain/fever, etc.).
+   - 💊 Safe Relief Medicines (Specific to this condition only): Mention 1-2 standard safe OTC options strictly matching their symptom (e.g. Antacids/Digene/Pudin Hara for stomach gas, Paracetamol for pain, etc.).
    - ⚠️ When to see a Doctor: 1-2 red flag warnings.
    - ❓ Diagnostic Question: 1 short relevant follow-up question.
 
@@ -153,11 +154,11 @@ Analyze specifically:
 2. 🩺 Visual/Lab Findings: What is seen in the image.
 3. 🔍 What it indicates: Clear explanation.
 4. 🌿 Home Remedies & Safe Self-Care: Practical relief tips.
-5. 💊 Recommended Safe OTC Care: Medicines strictly matching the visible issue.
+5. 💊 Recommended Safe Care: Medicines strictly matching the visible issue.
 6. ⚠️ Red Flags requiring hospital visit.
 7. ❓ 1 Follow-up Question.
 
-Respond empathetically in {language}."""
+Respond accurately in {language}."""
 
 
 def extract_triage_severity(text: str):
