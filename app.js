@@ -57,11 +57,11 @@ let savedReminders = JSON.parse(localStorage.getItem("medinova_reminders") || "[
 
 // Autocomplete Dictionary
 const COMMON_SUGGESTIONS = [
+  "Pet me dard aur gas relief",
   "High Fever with Body Pain",
-  "Platelets 85,000 Low Count Care",
   "Severe Headache / Migraine Relief",
   "Chest Tightness & Shortness of Breath",
-  "Stomach Pain & Acid Heartburn",
+  "Acid Reflux & Heartburn",
   "Skin Rash, Red Bumps & Itching",
   "Paracetamol 650mg Dosage Guidance",
   "Recovery Diet for Dengue"
@@ -92,7 +92,7 @@ if (heroReminderBtn) {
 }
 
 // =========================================================
-// GUARANTEED MOBILE & PC MEDICINE REMINDER SYSTEM
+// MEDICINE REMINDER SYSTEM
 // =========================================================
 function playAlarmSound() {
   try {
@@ -100,7 +100,7 @@ function playAlarmSound() {
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.type = "sine";
-    osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 beep
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
     gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
@@ -138,7 +138,6 @@ webSaveReminderBtn.addEventListener("click", () => {
     return;
   }
 
-  // Request native permission if supported
   if ("Notification" in window && Notification.permission !== "granted") {
     Notification.requestPermission();
   }
@@ -153,7 +152,6 @@ webSaveReminderBtn.addEventListener("click", () => {
 
 renderReminders();
 
-// Live Timer Checking (Runs every 10 seconds for instant mobile trigger)
 setInterval(() => {
   const now = new Date();
   const curTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
@@ -161,8 +159,6 @@ setInterval(() => {
   savedReminders.forEach(r => {
     if (r.time === curTime && !r.notifiedToday) {
       playAlarmSound();
-      
-      // Visual Alert for Mobile
       alert(`⏰ MEDINOVA MEDICINE REMINDER!\n\nTime to take scheduled dose: ${r.name}`);
       
       if ("Notification" in window && Notification.permission === "granted") {
@@ -172,13 +168,13 @@ setInterval(() => {
         });
       }
       r.notifiedToday = true;
-      setTimeout(() => { r.notifiedToday = false; }, 65000); // Reset for next day
+      setTimeout(() => { r.notifiedToday = false; }, 65000);
     }
   });
 }, 10000);
 
 // =========================================================
-// MOBILE ROBUST GPS LOCATION & HOSPITALS FINDER
+// GPS LOCATION & HOSPITALS FINDER
 // =========================================================
 function renderHospitalCards(lat, lon) {
   locStatusText.innerText = `GPS Location Active ✅ (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`;
@@ -222,7 +218,6 @@ function fetchUserHospitals() {
       },
       (err) => {
         console.log("GPS Notice:", err.message);
-        // Fallback to City Center coordinates so buttons always work on mobile
         userLocation.latitude = 26.9124;
         userLocation.longitude = 75.7873;
         renderHospitalCards(userLocation.latitude, userLocation.longitude);
@@ -350,19 +345,21 @@ function formatMedicalResponse(rawText) {
     let l = line.trim();
     if (!l) return;
 
-    if (l.startsWith("###") || l.startsWith("##") || (l.includes(":") && (l.includes("Summary") || l.includes("Medicines") || l.includes("First-Aid") || l.includes("Findings") || l.includes("Flags") || l.includes("Overview")))) {
+    if (l.startsWith("###") || l.startsWith("##") || (l.includes(":") && (l.includes("Overview") || l.includes("Causes") || l.includes("Remedies") || l.includes("Medicines") || l.includes("Care") || l.includes("Flags") || l.includes("Findings")))) {
       if (insideList) { formattedHtml += "</ul>"; insideList = false; }
       const headingText = l.replace(/^[#\d.\s:-]+/, "").replace(/[*_]/g, "").trim();
       
       if (headingText.toLowerCase().includes("flag") || headingText.toLowerCase().includes("emergency")) {
         formattedHtml += `<div class="chat-section-header" style="color:#dc2626; border-color:#fee2e2;"><i class="fa-solid fa-triangle-exclamation"></i> ${headingText}</div>`;
-      } else if (headingText.toLowerCase().includes("medicine") || headingText.toLowerCase().includes("first-aid")) {
-        formattedHtml += `<div class="chat-section-header" style="color:#16a34a; border-color:#dcfce7;"><i class="fa-solid fa-pills"></i> ${headingText}</div>`;
+      } else if (headingText.toLowerCase().includes("remed") || headingText.toLowerCase().includes("home")) {
+        formattedHtml += `<div class="chat-section-header" style="color:#059669; border-color:#d1fae5;"><i class="fa-solid fa-leaf"></i> ${headingText}</div>`;
+      } else if (headingText.toLowerCase().includes("medicine")) {
+        formattedHtml += `<div class="chat-section-header" style="color:#0284c7; border-color:#e0f2fe;"><i class="fa-solid fa-pills"></i> ${headingText}</div>`;
       } else {
         formattedHtml += `<div class="chat-section-header"><i class="fa-solid fa-stethoscope"></i> ${headingText}</div>`;
       }
     } 
-    else if (l.toLowerCase().includes("diagnostic question") || l.toLowerCase().startsWith("quick question")) {
+    else if (l.toLowerCase().includes("diagnostic question") || l.toLowerCase().startsWith("quick question") || l.toLowerCase().startsWith("follow-up")) {
       if (insideList) { formattedHtml += "</ul>"; insideList = false; }
       const qText = l.replace(/^[^:]+:\s*/i, "").replace(/[*_]/g, "");
       formattedHtml += `<div class="chat-followup-box"><i class="fa-solid fa-comments"></i> <strong>Doctor's Follow-up:</strong> ${qText}</div>`;
@@ -384,12 +381,12 @@ function formatMedicalResponse(rawText) {
   return formattedHtml;
 }
 
-// Intake Profile (Updated to Transgender)
+// Intake Profile (Transgender Option)
 function renderIntakeWelcome() {
   chatBox.innerHTML = `
     <div class="bubble bot">
       <p>Namaste! 🙏 I am <strong>Dr. MediNova AI</strong>.</p>
-      <p>Please confirm your profile for accurate medical triage:</p>
+      <p>Please confirm your details for tailored medical guidance:</p>
       
       <div class="intake-card" id="intake-form">
         <h4><i class="fa-solid fa-clipboard-user"></i> Patient Profile</h4>
@@ -415,7 +412,7 @@ function renderIntakeWelcome() {
     userProfile = { age: ageVal, gender: genderVal, completed: true };
     document.getElementById("intake-form").remove();
 
-    appendBubble("bot", `✅ <strong>Profile Saved!</strong> (${genderVal}, ${ageVal} yrs)<br>Aap report/medicine scan kar sakte hain ya symptoms likhein.`);
+    appendBubble("bot", `✅ <strong>Profile Saved!</strong> (${genderVal}, ${ageVal} yrs)<br>Aap symptoms likhein ya koi report/medicine scan karwayein.`);
   });
 }
 
@@ -601,7 +598,7 @@ async function sendMessage() {
   doctorLoader.id = "doctor-active-loader";
   doctorLoader.innerHTML = `
     <span class="doctor-avatar-anim">👨‍⚕️</span>
-    <span class="doc-thinking-text">Dr. MediNova is formulating concise triage & care guidance...</span>
+    <span class="doc-thinking-text">Dr. MediNova is formulating specific home remedies & guidance...</span>
   `;
   chatBox.appendChild(doctorLoader);
   chatBox.scrollTop = chatBox.scrollHeight;
@@ -627,7 +624,7 @@ async function sendMessage() {
     if (data.reply) {
       appendBubble("bot", data.reply, null, data.triage || null);
       speakText(data.reply);
-      consultationLogs.push({ q: text || "Scan Report", a: data.reply });
+      consultationLogs.push({ q: text || "Consultation", a: data.reply });
       setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 100);
     }
   } catch (err) {
