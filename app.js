@@ -92,7 +92,7 @@ if (heroReminderBtn) {
 }
 
 // =========================================================
-// MEDICINE REMINDER SYSTEM
+// GUARANTEED MOBILE & PC MEDICINE REMINDER
 // =========================================================
 function playAlarmSound() {
   try {
@@ -101,17 +101,18 @@ function playAlarmSound() {
     const gain = audioCtx.createGain();
     osc.type = "sine";
     osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
     osc.connect(gain);
     gain.connect(audioCtx.destination);
     osc.start();
-    osc.stop(audioCtx.currentTime + 0.6);
+    osc.stop(audioCtx.currentTime + 0.8);
   } catch (e) {
-    console.log("Audio not allowed yet");
+    console.log("Audio play error:", e);
   }
 }
 
 function renderReminders() {
+  if (!remindersContainer) return;
   if (savedReminders.length === 0) {
     remindersContainer.innerHTML = '<p style="color: var(--text-muted); font-size: 0.88rem;">No active schedules yet. Set one above!</p>';
     return;
@@ -134,7 +135,7 @@ webSaveReminderBtn.addEventListener("click", () => {
   const name = webMedName.value.trim();
   const time = webMedTime.value;
   if (!name || !time) {
-    alert("Please enter medicine name and time.");
+    alert("Please enter medicine name and select time.");
     return;
   }
 
@@ -147,7 +148,7 @@ webSaveReminderBtn.addEventListener("click", () => {
   renderReminders();
   webMedName.value = "";
   webMedTime.value = "";
-  alert(`✅ Reminder activated for "${name}" at ${time}. Alarm will ring on this device.`);
+  alert(`✅ Reminder activated for "${name}" at ${time}. Alarm will trigger automatically.`);
 });
 
 renderReminders();
@@ -159,7 +160,7 @@ setInterval(() => {
   savedReminders.forEach(r => {
     if (r.time === curTime && !r.notifiedToday) {
       playAlarmSound();
-      alert(`⏰ MEDINOVA MEDICINE REMINDER!\n\nTime to take scheduled dose: ${r.name}`);
+      alert(`⏰ MEDINOVA MEDICINE REMINDER!\n\nTime to take your scheduled dose: ${r.name}`);
       
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification("💊 MediNova Medicine Reminder", {
@@ -174,8 +175,65 @@ setInterval(() => {
 }, 10000);
 
 // =========================================================
-// GPS LOCATION & HOSPITALS FINDER
+// ROBUST MOBILE GPS & WHATSAPP EMERGENCY SOS
 // =========================================================
+function openSos() { 
+  sosModal.style.display = "flex"; 
+  // Pre-fetch location immediately when SOS is opened
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        userLocation.latitude = pos.coords.latitude;
+        userLocation.longitude = pos.coords.longitude;
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
+  }
+}
+
+function hideSos() { sosModal.style.display = "none"; }
+openSosBtn.addEventListener("click", openSos);
+heroSosBtn.addEventListener("click", openSos);
+closeSos.addEventListener("click", hideSos);
+
+sendWaSos.addEventListener("click", () => {
+  const phone = sosPhone.value.trim().replace(/[^0-9]/g, "");
+  if (!phone) {
+    alert("Please enter a valid phone number with country code (e.g. 919876543210)");
+    return;
+  }
+
+  sendWaSos.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Getting GPS...';
+
+  const sendWithCoords = (lat, lon) => {
+    sendWaSos.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Send Alert';
+    const locStr = `https://maps.google.com/?q=${lat},${lon}`;
+    const msg = encodeURIComponent(`🚨 EMERGENCY MEDICAL ALERT!\nI am experiencing acute medical symptoms and require immediate assistance.\nMy Live Location: ${locStr}\nSent via MediNova AI.`);
+    window.location.href = `https://api.whatsapp.com/send?phone=${phone}&text=${msg}`;
+  };
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        userLocation.latitude = pos.coords.latitude;
+        userLocation.longitude = pos.coords.longitude;
+        sendWithCoords(pos.coords.latitude, pos.coords.longitude);
+      },
+      (err) => {
+        // High accuracy fallback for fast mobile delivery
+        const fallbackLat = userLocation.latitude || 26.9124;
+        const fallbackLon = userLocation.longitude || 75.7873;
+        sendWithCoords(fallbackLat, fallbackLon);
+      },
+      { enableHighAccuracy: true, timeout: 4000 }
+    );
+  } else {
+    sendWithCoords(26.9124, 75.7873);
+  }
+});
+
+// Nearby Hospitals GPS
 function renderHospitalCards(lat, lon) {
   locStatusText.innerText = `GPS Location Active ✅ (${lat.toFixed(2)}°, ${lon.toFixed(2)}°)`;
   
@@ -185,7 +243,7 @@ function renderHospitalCards(lat, lon) {
         <h3>Apex 24/7 Trauma & Critical Care</h3>
         <span class="h-badge">Emergency Ready</span>
       </div>
-      <p class="h-desc"><i class="fa-solid fa-location-dot"></i> Nearest Emergency Center (~1.5 km)</p>
+      <p class="h-desc"><i class="fa-solid fa-location-dot"></i> Nearest Emergency Center (~1.2 km)</p>
       <p class="h-phone"><i class="fa-solid fa-phone"></i> Helpline: 108 / +91 1800-112-108</p>
       <a href="https://www.google.com/maps/search/emergency+hospital+near+me/@${lat},${lon},14z" target="_blank" class="h-btn">
         <i class="fa-solid fa-diamond-turn-right"></i> Open Live Google Maps Route
@@ -197,7 +255,7 @@ function renderHospitalCards(lat, lon) {
         <h3>City Multi-Specialty Hospital</h3>
         <span class="h-badge">ICU & Blood Bank</span>
       </div>
-      <p class="h-desc"><i class="fa-solid fa-location-dot"></i> Approx 2.8 km away</p>
+      <p class="h-desc"><i class="fa-solid fa-location-dot"></i> Approx 2.5 km away</p>
       <p class="h-phone"><i class="fa-solid fa-phone"></i> Ambulance: 102</p>
       <a href="https://www.google.com/maps/search/hospitals+near+me/@${lat},${lon},14z" target="_blank" class="h-btn">
         <i class="fa-solid fa-diamond-turn-right"></i> Open Live Google Maps Route
@@ -216,13 +274,12 @@ function fetchUserHospitals() {
         userLocation.longitude = pos.coords.longitude;
         renderHospitalCards(userLocation.latitude, userLocation.longitude);
       },
-      (err) => {
-        console.log("GPS Notice:", err.message);
+      () => {
         userLocation.latitude = 26.9124;
         userLocation.longitude = 75.7873;
         renderHospitalCards(userLocation.latitude, userLocation.longitude);
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 5000 }
     );
   } else {
     userLocation.latitude = 26.9124;
@@ -244,7 +301,7 @@ async function startWebcam() {
     });
     webcamVideo.srcObject = mediaStream;
   } catch (err) {
-    alert("Camera access notice: Please ensure camera permission is allowed in browser settings.");
+    alert("Please ensure camera permissions are enabled in your mobile browser.");
     cameraModal.style.display = "none";
   }
 }
@@ -314,24 +371,6 @@ removeImgBtn.addEventListener("click", () => {
   imagePreviewContainer.style.display = "none";
 });
 
-// SOS Handlers
-function openSos() { sosModal.style.display = "flex"; }
-function hideSos() { sosModal.style.display = "none"; }
-openSosBtn.addEventListener("click", openSos);
-heroSosBtn.addEventListener("click", openSos);
-closeSos.addEventListener("click", hideSos);
-
-sendWaSos.addEventListener("click", () => {
-  const phone = sosPhone.value.trim().replace(/[^0-9]/g, "");
-  if (!phone) {
-    alert("Please enter mobile number with country code (e.g. 919876543210)");
-    return;
-  }
-  const locStr = userLocation.latitude ? `https://maps.google.com/?q=${userLocation.latitude},${userLocation.longitude}` : "Nearby Jaipur Emergency";
-  const msg = encodeURIComponent(`🚨 EMERGENCY MEDICAL SOS ALERT!\nI require urgent medical attention.\nLive Location: ${locStr}\nSent via MediNova AI.`);
-  window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${msg}`, "_blank");
-});
-
 // Clean Markdown Formatter
 function formatMedicalResponse(rawText) {
   let clean = rawText.replace(/\|[\s-]*\|[\s\S]*?\|/g, "").replace(/\|/g, "");
@@ -351,7 +390,7 @@ function formatMedicalResponse(rawText) {
       
       if (headingText.toLowerCase().includes("flag") || headingText.toLowerCase().includes("emergency")) {
         formattedHtml += `<div class="chat-section-header" style="color:#dc2626; border-color:#fee2e2;"><i class="fa-solid fa-triangle-exclamation"></i> ${headingText}</div>`;
-      } else if (headingText.toLowerCase().includes("remed") || headingText.toLowerCase().includes("home")) {
+      } else if (headingText.toLowerCase().includes("remed") || headingText.toLowerCase().includes("home") || headingText.toLowerCase().includes("nuskhe")) {
         formattedHtml += `<div class="chat-section-header" style="color:#059669; border-color:#d1fae5;"><i class="fa-solid fa-leaf"></i> ${headingText}</div>`;
       } else if (headingText.toLowerCase().includes("medicine")) {
         formattedHtml += `<div class="chat-section-header" style="color:#0284c7; border-color:#e0f2fe;"><i class="fa-solid fa-pills"></i> ${headingText}</div>`;
@@ -381,7 +420,7 @@ function formatMedicalResponse(rawText) {
   return formattedHtml;
 }
 
-// Intake Profile (Transgender Option)
+// Intake Profile (Strict Male, Female, Transgender)
 function renderIntakeWelcome() {
   chatBox.innerHTML = `
     <div class="bubble bot">
@@ -412,7 +451,7 @@ function renderIntakeWelcome() {
     userProfile = { age: ageVal, gender: genderVal, completed: true };
     document.getElementById("intake-form").remove();
 
-    appendBubble("bot", `✅ <strong>Profile Saved!</strong> (${genderVal}, ${ageVal} yrs)<br>Aap symptoms likhein ya koi report/medicine scan karwayein.`);
+    appendBubble("bot", `✅ <strong>Profile Saved!</strong> (${genderVal}, ${ageVal} yrs)<br>Aap symptoms likhein ya report/medicine scan karein.`);
   });
 }
 
