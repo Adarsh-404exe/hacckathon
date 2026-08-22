@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- jsPDF for Clinical Summary Download -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
@@ -208,7 +207,7 @@
         </div>
       </div>
 
-      <!-- Quick Triage Chips (Removed Blood Test Chip) -->
+      <!-- Quick Triage Chips -->
       <div class="chat-chips" id="quick-chips-bar">
         <button class="chip" data-q="What is the recommended recovery diet for Dengue?">🥗 Dengue Diet Chart</button>
         <button class="chip" data-q="I have severe sudden chest tightness and left arm pain">🚨 Emergency Check</button>
@@ -229,18 +228,15 @@
 
       <!-- Input Area -->
       <div class="chat-input-row">
-        <!-- Open Live Camera Button -->
         <button id="open-camera-btn" class="tool-btn" title="Scan Lab Report / Medicine / Skin Rash">
           <i class="fa-solid fa-camera"></i>
         </button>
 
-        <!-- Upload File Button -->
         <label for="image-upload" class="tool-btn" title="Upload Image / Report / Medicine">
           <i class="fa-solid fa-image"></i>
           <input type="file" id="image-upload" accept="image/*" style="display:none;">
         </label>
 
-        <!-- Mic Button -->
         <button id="voice-btn" class="tool-btn" title="Speak via Mic">
           <i class="fa-solid fa-microphone"></i>
         </button>
