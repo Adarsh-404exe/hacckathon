@@ -92,7 +92,7 @@ if (heroReminderBtn) {
 }
 
 // =========================================================
-// GUARANTEED MOBILE & PC MEDICINE REMINDER
+// MEDICINE REMINDER ALARM (MOBILE & DESKTOP)
 // =========================================================
 function playAlarmSound() {
   try {
@@ -148,7 +148,7 @@ webSaveReminderBtn.addEventListener("click", () => {
   renderReminders();
   webMedName.value = "";
   webMedTime.value = "";
-  alert(`✅ Reminder activated for "${name}" at ${time}. Alarm will trigger automatically.`);
+  alert(`✅ Reminder activated for "${name}" at ${time}.`);
 });
 
 renderReminders();
@@ -175,11 +175,10 @@ setInterval(() => {
 }, 10000);
 
 // =========================================================
-// ROBUST MOBILE GPS & WHATSAPP EMERGENCY SOS
+// REAL-TIME MOBILE GPS & WHATSAPP SOS
 // =========================================================
 function openSos() { 
   sosModal.style.display = "flex"; 
-  // Pre-fetch location immediately when SOS is opened
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -209,7 +208,7 @@ sendWaSos.addEventListener("click", () => {
   const sendWithCoords = (lat, lon) => {
     sendWaSos.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Send Alert';
     const locStr = `https://maps.google.com/?q=${lat},${lon}`;
-    const msg = encodeURIComponent(`🚨 EMERGENCY MEDICAL ALERT!\nI am experiencing acute medical symptoms and require immediate assistance.\nMy Live Location: ${locStr}\nSent via MediNova AI.`);
+    const msg = encodeURIComponent(`🚨 EMERGENCY MEDICAL ALERT!\nI am experiencing acute symptoms and need urgent medical attention.\nMy Live Location: ${locStr}\nSent via MediNova AI.`);
     window.location.href = `https://api.whatsapp.com/send?phone=${phone}&text=${msg}`;
   };
 
@@ -221,12 +220,11 @@ sendWaSos.addEventListener("click", () => {
         sendWithCoords(pos.coords.latitude, pos.coords.longitude);
       },
       (err) => {
-        // High accuracy fallback for fast mobile delivery
         const fallbackLat = userLocation.latitude || 26.9124;
         const fallbackLon = userLocation.longitude || 75.7873;
         sendWithCoords(fallbackLat, fallbackLon);
       },
-      { enableHighAccuracy: true, timeout: 4000 }
+      { enableHighAccuracy: true, timeout: 3500 }
     );
   } else {
     sendWithCoords(26.9124, 75.7873);
@@ -301,7 +299,7 @@ async function startWebcam() {
     });
     webcamVideo.srcObject = mediaStream;
   } catch (err) {
-    alert("Please ensure camera permissions are enabled in your mobile browser.");
+    alert("Please enable camera access in your browser permissions.");
     cameraModal.style.display = "none";
   }
 }
@@ -420,12 +418,12 @@ function formatMedicalResponse(rawText) {
   return formattedHtml;
 }
 
-// Intake Profile (Strict Male, Female, Transgender)
+// INTAKE PROFILE (STRICTLY MALE, FEMALE, TRANSGENDER)
 function renderIntakeWelcome() {
   chatBox.innerHTML = `
     <div class="bubble bot">
       <p>Namaste! 🙏 I am <strong>Dr. MediNova AI</strong>.</p>
-      <p>Please confirm your details for tailored medical guidance:</p>
+      <p>Please confirm your details for accurate clinical guidance:</p>
       
       <div class="intake-card" id="intake-form">
         <h4><i class="fa-solid fa-clipboard-user"></i> Patient Profile</h4>
